@@ -124,6 +124,30 @@ namespace Language.Scan
                 }
                 if (got)
                     continue;
+                if (s[i] == '<')
+                {
+                    StartLexema();
+                    AddChar();
+                    if (i < s.Length && s[i] == '<')
+                    {
+                        AddChar();
+                        SetLexType(LexType.Tlshift);
+                        yield return EndLexema();
+                        continue;
+                    }
+                }
+                if (s[i] == '>')
+                {
+                    StartLexema();
+                    AddChar();
+                    if (i < s.Length && s[i] == '>')
+                    {
+                        AddChar();
+                        SetLexType(LexType.Trshift);
+                        yield return EndLexema();
+                        continue;
+                    }
+                }
                 if (s[i] == '0')
                 {
                     StartLexema();
@@ -184,12 +208,12 @@ namespace Language.Scan
                     }
                     ++i;
                 }
-                if (i+1 < s.Length && s[i] == '/' && i + 1 < s.Length && s[i + 1] == '/')
+                if (i + 1 < s.Length && s[i] == '/' && i + 1 < s.Length && s[i + 1] == '/')
                 {
                     i += 2;
                     return IgnoreUntil(false, '\n');
                 }
-                if (i+1 < s.Length && s[i] == '/' && i + 1 < s.Length && s[i + 1] == '*')
+                if (i + 1 < s.Length && s[i] == '/' && i + 1 < s.Length && s[i + 1] == '*')
                 {
                     i += 2;
                     return IgnoreUntil(true, '*', '/');
@@ -212,12 +236,12 @@ namespace Language.Scan
                     got = true;
                     break;
                 }
+                ++i;
                 if (s[i] == '\n')
                 {
                     lineStart = i + 1;
                     line += 1;
                 }
-                ++i;
             }
             if (!got && i >= s.Length && returnError)
             {

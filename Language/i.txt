@@ -1,1 +1,20 @@
-int h , y , ju 
+int g = 8;
+
+long long int j,k=6  ;
+
+void kek(){
+call();
+}
+
+//азаза
+void                            main(char args){
+char f = 5 +                /**rtr
+
+
+trtr* */ 0x7649f - 0337 ^ 3 * ~1 >> 7;
+for(long long int fhghghgghghh654__54654 = 0xdeadbeed; 5+a; fhghghgghghh654__54654 = 67 % fhg){
+for(long long int fhghghgghghh654__54654 = 0xdeadbeef; 5+7; fhghghgghghh654__54654 = 67 / fhg)
+    kek();;;;
+    for(int fhghghgghghh654__54654  =~~~0xa0aa00; 5+7; fhghghgghghh654__54654 = 67 << fhg){}
+}
+}

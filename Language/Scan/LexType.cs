@@ -29,6 +29,8 @@
         Txor,
         Tnot,
         Teq,
+        Tlshift,
+        Trshift,
         Tend = 666,
         Terr = 9000
     }}

@@ -21,6 +21,11 @@ namespace Language
                 Console.WriteLine($"Error analyzing program: {e.Message}");
                 Environment.Exit(1);
             }
+            catch (SureParseException e)
+            {
+                Console.WriteLine($"Error analyzing program: {e.InnerException.Message}");
+                Environment.Exit(1);
+            }
             catch (TokenException e)
             {
                 Console.WriteLine($"Error parsing program: {e.Message}");
