@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.ComponentModel;
+using System.Collections.Generic;
 using Language.Scan;
+using MoreLinq;
 
 namespace Language.Analyzer
 {
@@ -16,45 +16,112 @@ namespace Language.Analyzer
 
         public void Check()
         {
-            Many(() => Description());
+            Many(Description);
         }
 
         private void Description()
         {
-            Or(() => Data(), () => Func());
+            Or(Data, Function);
+        }
+
+        private void Function()
+        {
+            L(LexType.Tchar);
+        }
+
+        private void Data()
+        {
+            Or(() => L(LexType.TintType),
+                () => Seq(
+                    () => L(LexType.TlongIntType),
+                    () => L(LexType.TlongIntType),
+                    () => L(LexType.TintType)),
+                () => L(LexType.TcharType));
+            Def();
+            Maybe(() => Many(() => Seq(() => L(LexType.Tcomma), Def)));
+            L(LexType.Tdelim);
+        }
+
+        private void Def()
+        {
+            Seq(() => L(LexType.Tident),
+                () => Maybe(() => Seq(() => L(LexType.Teq), Expr)));
+        }
+
+        private void Expr()
+        {
+            L(LexType.Tand);
         }
 
         private void Many(Action comb)
         {
-            while (sc.HasNext)
+            comb();
+            try
             {
-                comb();
+                while (sc.HasNext)
+                {
+                    sc.PushState();
+                    comb();
+                    sc.DropState();
+                }
+            }
+            catch (ParseException e)
+            {
+                //Console.WriteLine("many " + e.Message);
+                sc.PopState();
             }
         }
 
-        private void Data(Lexema l)
+        private void Or(params Action[] combinators)
         {
-            if (l.Type == LexType.TlongIntType)
+            var errors = new List<ParseException>();
+            foreach (var comb in combinators)
             {
-                NextMust(LexType.TlongIntType);
-                NextMust(LexType.TintType);
+                try
+                {
+                    sc.PushState();
+                    comb();
+                    sc.DropState();
+                    return;
+                }
+                catch (ParseException e)
+                {
+                    //  Console.WriteLine("or   " + e.Message);
+                    sc.PopState();
+                    errors.Add(e);
+                }
             }
-            NextMust(LexType.Tident);
+            throw errors.MaxBy(e => e.Lexema);
         }
 
-        private void NextMust(LexType type)
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
+        private void L(LexType type)
         {
             var l = sc.Next();
             if (l.Type != type)
             {
-                PrintError($"Wrong element: {l.Tok}, {Enum.GetName(typeof(LexType), type)} expected");
+                throw new ParseException(l, type);
             }
         }
 
-        private void PrintError(string err)
+        private void Maybe(Action comb)
         {
-            Console.WriteLine(err + $" at {sc.Current.Line}:{sc.Current.Symbol}");
-            Environment.Exit(1);
+            try
+            {
+                sc.PushState();
+                comb();
+                sc.DropState();
+            }
+            catch (ParseException e)
+            {
+                // Console.WriteLine("may  " + e.Message);
+                sc.PopState();
+            }
+        }
+
+        private void Seq(params Action[] combinators)
+        {
+            combinators.ForEach(comb => comb());
         }
     }
 }

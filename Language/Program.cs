@@ -12,7 +12,21 @@ namespace Language
             var content = File.ReadAllText(args[0]);
             var sc = new Scanner(content);
             var a = new SyntaxAnalyzer(sc);
-            a.Check();
+            try
+            {
+                a.Check();
+            }
+            catch (ParseException e)
+            {
+                Console.WriteLine($"Error analyzing program: {e.Message}");
+                Environment.Exit(1);
+            }
+            catch (TokenException e)
+            {
+                Console.WriteLine($"Error parsing program: {e.Message}");
+                Environment.Exit(1);
+            }
+            Console.WriteLine("Program is correct!");
         }
     }
 }

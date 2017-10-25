@@ -15,9 +15,9 @@ namespace Language.Scan
         private int current;
         private int lineStart;
         private int line = 1;
-        private int Symbol => i - lineStart - 1;
+        private int Symbol => i - lineStart;
 
-        public bool HasNext => current + 1 < lexemas.Count;
+        public bool HasNext => current + 1 < lexemas.Count && lexemas[current + 1].Type != LexType.Tend;
         public Lexema Current => lexemas[current];
 
         public Scanner(string content)
@@ -32,10 +32,14 @@ namespace Language.Scan
         {
             if (!HasNext)
             {
-                return null;
+                return lexemas[current + 1];
             }
-            ++current;
-            return lexemas[current];
+            var l = lexemas[++current];
+            if (l.Type == LexType.Terr)
+            {
+                throw new TokenException(l);
+            }
+            return l;
         }
 
         public void PushState()
@@ -171,7 +175,7 @@ namespace Language.Scan
             do
             {
                 startI = i;
-                while (s[i] == ' ' || s[i] == '\n')
+                while (i < s.Length && (s[i] == ' ' || s[i] == '\n'))
                 {
                     if (s[i] == '\n')
                     {
@@ -180,12 +184,12 @@ namespace Language.Scan
                     }
                     ++i;
                 }
-                if (s[i] == '/' && i + 1 < s.Length && s[i + 1] == '/')
+                if (i+1 < s.Length && s[i] == '/' && i + 1 < s.Length && s[i + 1] == '/')
                 {
                     i += 2;
                     return IgnoreUntil(false, '\n');
                 }
-                if (s[i] == '/' && i + 1 < s.Length && s[i + 1] == '*')
+                if (i+1 < s.Length && s[i] == '/' && i + 1 < s.Length && s[i + 1] == '*')
                 {
                     i += 2;
                     return IgnoreUntil(true, '*', '/');
@@ -208,6 +212,11 @@ namespace Language.Scan
                     got = true;
                     break;
                 }
+                if (s[i] == '\n')
+                {
+                    lineStart = i + 1;
+                    line += 1;
+                }
                 ++i;
             }
             if (!got && i >= s.Length && returnError)
@@ -221,7 +230,7 @@ namespace Language.Scan
 
         private Lexema CharParse()
         {
-            if (s[i] >= '0' && s[i] <= '9' || s[i] >= 'a' && s[i] <= 'z')
+            if (i < s.Length && (s[i] >= '0' && s[i] <= '9' || s[i] >= 'a' && s[i] <= 'z'))
             {
                 AddChar();
                 if (s[i] == '\'')
@@ -236,8 +245,9 @@ namespace Language.Scan
 
         private Lexema IdentParse()
         {
-            while (s[i] >= 'a' && s[i] <= 'z' || s[i] >= 'A' && s[i] <= 'Z' || s[i] >= '0' && s[i] <= '9' ||
-                   s[i] == '_')
+            while (i < s.Length && (s[i] >= 'a' && s[i] <= 'z' || s[i] >= 'A' && s[i] <= 'Z' ||
+                                    s[i] >= '0' && s[i] <= '9' ||
+                                    s[i] == '_'))
                 AddChar();
             switch (curr.Tok)
             {
@@ -268,24 +278,29 @@ namespace Language.Scan
 
         private Lexema DecParse()
         {
-            while (s[i] >= '0' && s[i] <= '9')
+            while (i < s.Length && s[i] >= '0' && s[i] <= '9')
                 AddChar();
             return EndLexema();
         }
 
         private Lexema NNumParse()
         {
-            if (s[i] == 'x' || s[i] == 'X')
+            if (i < s.Length && (s[i] == 'x' || s[i] == 'X'))
             {
                 AddChar();
                 SetLexType(LexType.Tinth);
                 return HexParse();
             }
-            if (s[i] >= '0' && s[i] <= '9')
+            if (i < s.Length && s[i] >= '0' && s[i] <= '9')
             {
                 AddChar();
                 SetLexType(LexType.Tinto);
                 return OctalParse();
+            }
+            if (curr.Tok == "0")
+            {
+                SetLexType(LexType.Tintd);
+                return EndLexema();
             }
             SetLexType(LexType.Terr);
             return EndLexema();
@@ -293,19 +308,19 @@ namespace Language.Scan
 
         private Lexema OctalParse()
         {
-            while (s[i] >= '0' && s[i] <= '7')
+            while (i < s.Length && s[i] >= '0' && s[i] <= '7')
                 AddChar();
             return EndLexema();
         }
 
         private Lexema HexParse()
         {
-            if ((s[i] < '0' || s[i] > '9') && (s[i] < 'a' || s[i] > 'f'))
+            if (i >= s.Length || (s[i] < '0' || s[i] > '9') && (s[i] < 'a' || s[i] > 'f'))
             {
                 SetLexType(LexType.Terr);
                 return EndLexema();
             }
-            while (s[i] >= '0' && s[i] <= '9' || s[i] >= 'a' && s[i] <= 'f')
+            while (i < s.Length && (s[i] >= '0' && s[i] <= '9' || s[i] >= 'a' && s[i] <= 'f'))
                 AddChar();
             return EndLexema();
         }

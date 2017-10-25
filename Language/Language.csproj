@@ -6,4 +6,7 @@
   <ItemGroup>
     <Folder Include="scan" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="morelinq" Version="2.8.0" />
+  </ItemGroup>
 </Project>
