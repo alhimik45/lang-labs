@@ -1,23 +1,28 @@
-int g = 8;
+void lol(char y, int h){
 
-long long int j,k=8  ;
+}
 
 void kek(){
-kek();
+
 }
 
-//азаза
-void                            main(char args){
-char f = 'j';
-char f = 'j';
-char f = 'j';
-long long int h= 5 +                /**rtr
-
-
-trtr* */ 0x7649f - 0337 ^ 3 * ~1 >> 7;
-for(long long int fhghghgghghh654__54654 = 0xdeadbeed; 5+fhghghgghghh654__54654; fhghghgghghh654__54654 = 67 % 4){
-for(long long int fhghghgghghh654__54654 = 0xdeadbeef; 5+7; fhghghgghghh654__54654 = 67 / 2)
-    kek();;;;
-    for(int fhghghgghghh654__54654  =~~~0xa0aa00; 5+7; fhghghgghghh654__54654 = 67 << h){}
+void cheburek(long long int r, char y, char d){
+ 
 }
+
+int t = 5;
+void main(){
+    t = 9;
+    char t = 'h';
+    int h = 322, k = 42;
+    lol(t,k);
+    kek();
+    cheburek(h,t,t);
+    {
+        t = 'k';
+        int t;
+        t = 1;
+    
+    }
+    t = 'k';
 }

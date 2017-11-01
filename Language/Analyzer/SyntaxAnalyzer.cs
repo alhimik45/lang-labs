@@ -47,22 +47,24 @@ namespace Language.Analyzer
             var fn = AddVar(nameL, SemType.Function);
             Sure(() =>
             {
-                NewEnv();
-                L(LexType.Tlparen);
-                Maybe(() => Params(fn));
-                L(LexType.Trparen);
-                Block();
-                DropEnv();
+                using (NewEnv())
+                {
+                    L(LexType.Tlparen);
+                    Maybe(() => Params(fn));
+                    L(LexType.Trparen);
+                    Block();
+                }
             });
         }
 
         private void Block()
         {
-            NewEnv();
-            L(LexType.Tlbracket);
-            Maybe(() => Many(Statement));
-            Sure(() => L(LexType.Trbracket));
-            DropEnv();
+            using (NewEnv())
+            {
+                L(LexType.Tlbracket);
+                Maybe(() => Many(Statement));
+                Sure(() => L(LexType.Trbracket));
+            }
         }
 
         private void Statement()
@@ -126,19 +128,26 @@ namespace Language.Analyzer
 
         private void For()
         {
-            NewEnv();
-            L(LexType.Tfor);
-            L(LexType.Tlparen);
-            Sure(() =>
+            using (NewEnv())
             {
-                Data();
-                Expr();
-                L(LexType.Tdelim);
-                Expr();
-                L(LexType.Trparen);
-                Statement();
-            });
-            DropEnv();
+                L(LexType.Tfor);
+                Sure(() =>
+                {
+                    L(LexType.Tlparen);
+                    Maybe(() =>
+                    {
+                        Data();
+                        Sure(() =>
+                        {
+                            Maybe(() => Expr());
+                            L(LexType.Tdelim);
+                            Maybe(() => Expr());
+                        });
+                    });
+                    L(LexType.Trparen);
+                    Statement();
+                });
+            }
         }
 
         private void Params(VarInfo fn)
@@ -422,9 +431,10 @@ namespace Language.Analyzer
             }
         }
 
-        private void NewEnv()
+        private Env NewEnv()
         {
             environment.Add(new Dictionary<string, VarInfo>());
+            return new Env(environment);
         }
 
         private void DropEnv()
@@ -442,7 +452,7 @@ namespace Language.Analyzer
                 throw new SemanticException($"Cannot redefine variable: `{name}`", var,
                     $"previous declaration at {prev.Location.Line}:{prev.Location.Symbol}");
             }
-            return environment.Last()[name] = VarInfo.Of(type, var);
+            return currentFrame[name] = VarInfo.Of(type, var);
         }
 
         private VarInfo TryFindVar(string name)
