@@ -31,6 +31,11 @@ namespace Language
                 Console.WriteLine($"Error parsing program: {e.Message}");
                 Environment.Exit(1);
             }
+            catch (SemanticException e)
+            {
+                Console.WriteLine(e.Message);
+                Environment.Exit(1);
+            }
             Console.WriteLine("Program is correct!");
         }
     }

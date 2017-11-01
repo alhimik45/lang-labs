@@ -10,10 +10,14 @@ namespace Language.Analyzer
     {
         private readonly Scanner sc;
         private ParseException lastEx;
+        private readonly List<Dictionary<string, VarInfo>> environment;
+
 
         public SyntaxAnalyzer(Scanner sc)
         {
             this.sc = sc;
+            environment = new List<Dictionary<string, VarInfo>>();
+            NewEnv();
         }
 
         public void Check()
@@ -37,22 +41,28 @@ namespace Language.Analyzer
         private void Function()
         {
             L(LexType.TvoidType);
-            Or(() => L(LexType.Tident),
-                () => L(LexType.Tmain));
+            Lexema nameL = null;
+            Or(() => { nameL = L(LexType.Tident); },
+                () => { nameL = L(LexType.Tmain); });
+            var fn = AddVar(nameL, SemType.Function);
             Sure(() =>
             {
+                NewEnv();
                 L(LexType.Tlparen);
-                Maybe(Params);
+                Maybe(() => Params(fn));
                 L(LexType.Trparen);
                 Block();
+                DropEnv();
             });
         }
 
         private void Block()
         {
+            NewEnv();
             L(LexType.Tlbracket);
             Maybe(() => Many(Statement));
             Sure(() => L(LexType.Trbracket));
+            DropEnv();
         }
 
         private void Statement()
@@ -73,27 +83,50 @@ namespace Language.Analyzer
 
         private void Funcall()
         {
-            L(LexType.Tident);
+            var l = L(LexType.Tident);
+            var fn = FindVar(l);
             Sure(() =>
             {
                 L(LexType.Tlparen);
-
+                var count = 0;
                 Maybe(() =>
                 {
-                    Expr();
+                    var ll = GetNextLex();
+                    var eType = Expr();
+                    ++count;
+                    if (fn.Params.Count < count)
+                    {
+                        throw new SemanticException("Extra function parameter", ll);
+                    }
+                    Mismatch(fn.Params[count - 1], eType, ll);
                     Maybe(() => Many(() =>
                     {
                         L(LexType.Tcomma);
-                        Sure(Expr);
+                        Sure(() =>
+                        {
+                            var lll = GetNextLex();
+                            var eeType = Expr();
+                            ++count;
+                            if (fn.Params.Count < count)
+                            {
+                                throw new SemanticException("Extra function parameter", ll);
+                            }
+                            Mismatch(fn.Params[count - 1], eeType, lll);
+                        });
                     }));
-                });
-                L(LexType.Trparen);
+                }, () => count = 0);
+                var llll = L(LexType.Trparen);
+                if (fn.Params.Count != count)
+                {
+                    throw new SemanticException("Wrong number of function parameters", llll);
+                }
                 L(LexType.Tdelim);
             });
         }
 
         private void For()
         {
+            NewEnv();
             L(LexType.Tfor);
             L(LexType.Tlparen);
             Sure(() =>
@@ -105,135 +138,207 @@ namespace Language.Analyzer
                 L(LexType.Trparen);
                 Statement();
             });
+            DropEnv();
         }
 
-        private void Params()
+        private void Params(VarInfo fn)
         {
-            Param();
+            Param(fn);
             Maybe(() => Many(() =>
             {
                 L(LexType.Tcomma);
-                Param();
+                Param(fn);
             }));
         }
 
-        private void Param()
+        private void Param(VarInfo fn)
         {
-            Or(() => L(LexType.TintType),
-                () =>
-                {
-                    L(LexType.TlongIntType);
-                    L(LexType.TlongIntType);
-                    L(LexType.TintType);
-                },
-                () => L(LexType.TcharType));
-            L(LexType.Tident);
+            var type = Type();
+            var id = L(LexType.Tident);
+            AddVar(id, type);
+            fn.AddParam(type);
         }
 
         private void Data()
         {
-            Or(() => L(LexType.TintType),
-                () =>
-                {
-                    L(LexType.TlongIntType);
-                    L(LexType.TlongIntType);
-                    L(LexType.TintType);
-                },
-                () => L(LexType.TcharType));
-            Def();
+            var type = Type();
+            Def(type);
             Maybe(() => Many(() =>
             {
                 L(LexType.Tcomma);
-                Def();
+                Def(type);
             }));
             L(LexType.Tdelim);
         }
 
-        private void Def()
+        private SemType Type()
         {
-            L(LexType.Tident);
-            Maybe(() =>
+            var type = default(SemType);
+            Or(() =>
+                {
+                    L(LexType.TintType);
+                    type = SemType.Int;
+                },
+                () =>
+                {
+                    L(LexType.TlongIntType);
+                    Sure(() =>
+                    {
+                        L(LexType.TlongIntType);
+                        L(LexType.TintType);
+                    });
+                    type = SemType.LongLongInt;
+                },
+                () =>
+                {
+                    L(LexType.TcharType);
+                    type = SemType.Char;
+                });
+            return type;
+        }
+
+        private void Def(SemType type)
+        {
+            Sure(() =>
             {
-                L(LexType.Teq);
-                Expr();
+                var id = L(LexType.Tident);
+                AddVar(id, type);
+                Maybe(() =>
+                {
+                    L(LexType.Teq);
+                    var l = GetNextLex();
+                    var eType = Expr();
+                    Mismatch(type, eType, l);
+                });
             });
         }
 
-        private void ExprPart(Action next, params LexType[] tokens)
+        private SemType ExprPart(Func<SemType> next, params LexType[] tokens)
         {
-            next();
+            var type = next();
             Maybe(() => Many(() =>
             {
                 Or(tokens.Select<LexType, Action>(t => () => L(t)).ToArray());
-                next();
+                var l = sc.Current;
+                var nextType = next();
+                Mismatch(type, nextType, l);
             }));
+            return type;
         }
 
-        private void Expr()
+        private SemType Expr()
         {
+            var type = default(SemType);
             Or(() =>
                 {
-                    L(LexType.Tident);
+                    var var = L(LexType.Tident);
+                    type = FindVar(var).Type;
                     Maybe(() => Many(() =>
                     {
                         L(LexType.Teq);
-                        Sure(A2);
+                        var l = GetNextLex();
+                        Sure(() =>
+                        {
+                            var eType = A2();
+                            Mismatch(type, eType, l);
+                        });
                     }));
                 },
-                A2);
+                () => { type = A2(); });
+            return type;
         }
 
-        private void A2()
+        private Lexema GetNextLex()
         {
-            ExprPart(A3, LexType.Tor);
+            sc.PushState();
+            var l = sc.Next();
+            sc.PopState();
+            return l;
         }
 
-        private void A3()
+        private static void Mismatch(SemType type, SemType eType, Lexema l)
         {
-            ExprPart(A4, LexType.Txor);
+            var t = type == SemType.LongLongInt ? SemType.Int : type;
+            var tt = eType == SemType.LongLongInt ? SemType.Int : eType;
+            if (t != tt)
+            {
+                throw new SemanticException("Expression type mismatch", l,
+                    $"cannot assign {eType.ToStr()} to {type.ToStr()}");
+            }
         }
 
-        private void A4()
+        private SemType A2()
         {
-            ExprPart(A5, LexType.Tand);
+            return ExprPart(A3, LexType.Tor);
         }
 
-        private void A5()
+        private SemType A3()
         {
-            ExprPart(A6, LexType.Tlshift, LexType.Trshift);
+            return ExprPart(A4, LexType.Txor);
         }
 
-        private void A6()
+        private SemType A4()
         {
-            ExprPart(A7, LexType.Tplus, LexType.Tminus);
+            return ExprPart(A5, LexType.Tand);
         }
 
-        private void A7()
+        private SemType A5()
         {
-            ExprPart(A8, LexType.Tmul, LexType.Tdiv, LexType.Tmod);
+            return ExprPart(A6, LexType.Tlshift, LexType.Trshift);
         }
 
-        private void A8()
+        private SemType A6()
+        {
+            return ExprPart(A7, LexType.Tplus, LexType.Tminus);
+        }
+
+        private SemType A7()
+        {
+            return ExprPart(A8, LexType.Tmul, LexType.Tdiv, LexType.Tmod);
+        }
+
+        private SemType A8()
         {
             Maybe(() => Many(() => L(LexType.Tnot)));
-            A9();
+            return A9();
         }
 
-        private void A9()
+        private SemType A9()
         {
+            var type = default(SemType);
             Or(
-                () => L(LexType.Tident),
+                () =>
+                {
+                    var id = L(LexType.Tident);
+                    type = FindVar(id).Type;
+                },
                 () =>
                 {
                     L(LexType.Tlparen);
-                    Expr();
+                    type = Expr();
                     L(LexType.Trparen);
                 },
-                () => L(LexType.Tintd),
-                () => L(LexType.Tinth),
-                () => L(LexType.Tinto),
-                () => L(LexType.Tchar)
-            );
+                () =>
+                {
+                    L(LexType.Tintd);
+                    type = SemType.Int;
+                },
+                () =>
+                {
+                    L(LexType.Tinth);
+                    type = SemType.Int;
+                },
+                () =>
+                {
+                    L(LexType.Tinto);
+                    type = SemType.Int;
+                },
+                () =>
+                {
+                    L(LexType.Tchar);
+                    type = SemType.Char;
+                });
+            return type;
         }
 
         private void Many(Action comb)
@@ -278,16 +383,17 @@ namespace Language.Analyzer
         }
 
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
-        private void L(LexType type)
+        private Lexema L(LexType type)
         {
             var l = sc.Next();
             if (l.Type != type)
             {
                 throw new ParseException(l, type);
             }
+            return l;
         }
 
-        private void Maybe(Action comb)
+        private void Maybe(Action comb, Action failedCb = null)
         {
             try
             {
@@ -300,6 +406,7 @@ namespace Language.Analyzer
                 lastEx = e;
                 // Console.WriteLine("may  " + e.Message);
                 sc.PopState();
+                failedCb?.Invoke();
             }
         }
 
@@ -313,6 +420,51 @@ namespace Language.Analyzer
             {
                 throw new SureParseException(e);
             }
+        }
+
+        private void NewEnv()
+        {
+            environment.Add(new Dictionary<string, VarInfo>());
+        }
+
+        private void DropEnv()
+        {
+            environment.RemoveAt(environment.Count - 1);
+        }
+
+        private VarInfo AddVar(Lexema var, SemType type)
+        {
+            var name = var.Tok;
+            var currentFrame = environment.Last();
+            if (currentFrame.ContainsKey(name))
+            {
+                var prev = currentFrame[name];
+                throw new SemanticException($"Cannot redefine variable: `{name}`", var,
+                    $"previous declaration at {prev.Location.Line}:{prev.Location.Symbol}");
+            }
+            return environment.Last()[name] = VarInfo.Of(type, var);
+        }
+
+        private VarInfo TryFindVar(string name)
+        {
+            var origFrame = ((IEnumerable<Dictionary<string, VarInfo>>) environment)
+                .Reverse().FirstOrDefault(frame => frame.ContainsKey(name));
+            return origFrame?[name];
+        }
+
+        private VarInfo TryFindVar(Lexema lex)
+        {
+            return TryFindVar(lex.Tok);
+        }
+
+        private VarInfo FindVar(Lexema lex)
+        {
+            var res = TryFindVar(lex);
+            if (res == null)
+            {
+                throw new SemanticException($"Undefined variable: {lex.Tok}", lex);
+            }
+            return res;
         }
     }
 }

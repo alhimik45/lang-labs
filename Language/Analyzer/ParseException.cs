@@ -8,7 +8,7 @@ namespace Language.Analyzer
         public Lexema Lexema { get; }
 
         public ParseException(Lexema unexpected, LexType? expected) :
-            base(
+            base(//TODO
                 $"Unexpected {Enum.GetName(typeof(LexType), unexpected.Type)} at {unexpected.Line}:{unexpected.Symbol}" +
                 (expected != null
                     ? $", expected {Enum.GetName(typeof(LexType), expected.Value)}"
