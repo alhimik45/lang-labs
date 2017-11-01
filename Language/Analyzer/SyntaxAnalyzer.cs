@@ -74,17 +74,22 @@ namespace Language.Analyzer
         private void Funcall()
         {
             L(LexType.Tident);
-            L(LexType.Tlparen);
-            Maybe(() =>
+            Sure(() =>
             {
-                Expr();
-                Maybe(() => Many(() =>
+                L(LexType.Tlparen);
+
+                Maybe(() =>
                 {
-                    L(LexType.Tdelim);
                     Expr();
-                }));
+                    Maybe(() => Many(() =>
+                    {
+                        L(LexType.Tcomma);
+                        Sure(Expr);
+                    }));
+                });
+                L(LexType.Trparen);
+                L(LexType.Tdelim);
             });
-            Sure(() => L(LexType.Trparen));
         }
 
         private void For()
@@ -166,7 +171,16 @@ namespace Language.Analyzer
 
         private void Expr()
         {
-            ExprPart(A2, LexType.Teq);
+            Or(() =>
+                {
+                    L(LexType.Tident);
+                    Maybe(() => Many(() =>
+                    {
+                        L(LexType.Teq);
+                        Sure(A2);
+                    }));
+                },
+                A2);
         }
 
         private void A2()
@@ -208,13 +222,13 @@ namespace Language.Analyzer
         private void A9()
         {
             Or(
+                () => L(LexType.Tident),
                 () =>
                 {
                     L(LexType.Tlparen);
                     Expr();
                     L(LexType.Trparen);
                 },
-                () => L(LexType.Tident),
                 () => L(LexType.Tintd),
                 () => L(LexType.Tinth),
                 () => L(LexType.Tinto),
