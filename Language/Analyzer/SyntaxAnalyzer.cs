@@ -437,11 +437,6 @@ namespace Language.Analyzer
             return new Env(environment);
         }
 
-        private void DropEnv()
-        {
-            environment.RemoveAt(environment.Count - 1);
-        }
-
         private VarInfo AddVar(Lexema var, SemType type)
         {
             var name = var.Tok;
