@@ -152,12 +152,12 @@ namespace Language.Analyzer
                 ["R".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
                     [LexType.Tident] = new ITerm[] {LexType.Tident.Of(), "N".Of()},
-                    [LexType.Tinth] = new[] {"P".Of()},
-                    [LexType.Tinto] = new[] {"P".Of()},
-                    [LexType.Tintd] = new[] {"P".Of()},
-                    [LexType.Tchar] = new[] {"P".Of()},
-                    [LexType.Tlparen] = new[] {"P".Of()},
-                    [LexType.Tnot] = new[] {"P".Of()},
+                    [LexType.Tinth] = new[] {"expr".Of()},
+                    [LexType.Tinto] = new[] {"expr".Of()},
+                    [LexType.Tintd] = new[] {"expr".Of()},
+                    [LexType.Tchar] = new[] {"expr".Of()},
+                    [LexType.Tlparen] = new[] {"expr".Of()},
+                    [LexType.Tnot] = new[] {"expr".Of()},
                 },
                 ["for".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
