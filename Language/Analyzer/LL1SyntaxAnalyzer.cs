@@ -14,9 +14,9 @@ namespace Language.Analyzer
             {
                 ["program".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.TintType] = new[] {"data".Of(), "program".Of()},
-                    [LexType.TcharType] = new[] {"data".Of(), "program".Of()},
-                    [LexType.TlongIntType] = new[] {"data".Of(), "program".Of()},
+                    [LexType.TintType] = new ITerm[] {"data".Of(), LexType.Tdelim.Of(), "program".Of()},
+                    [LexType.TcharType] = new ITerm[] {"data".Of(), LexType.Tdelim.Of(), "program".Of()},
+                    [LexType.TlongIntType] = new ITerm[] {"data".Of(), LexType.Tdelim.Of(), "program".Of()},
                     [LexType.TvoidType] = new ITerm[]
                     {
                         LexType.TvoidType.Of(), LexType.Tident.Of(), LexType.Tlparen.Of(), "params".Of(),
@@ -27,15 +27,16 @@ namespace Language.Analyzer
                 },
                 ["data".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.TintType] = new ITerm[] {"type".Of(), "defs".Of(), LexType.Tdelim.Of()},
-                    [LexType.TcharType] = new ITerm[] {"type".Of(), "defs".Of(), LexType.Tdelim.Of()},
-                    [LexType.TlongIntType] = new ITerm[] {"type".Of(), "defs".Of(), LexType.Tdelim.Of()},
+                    [LexType.TintType] = new[] {"type".Of(), "defs".Of()},
+                    [LexType.TcharType] = new[] {"type".Of(), "defs".Of()},
+                    [LexType.TlongIntType] = new[] {"type".Of(), "defs".Of()},
                 },
                 ["type".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
                     [LexType.TintType] = new[] {LexType.TintType.Of()},
                     [LexType.TcharType] = new[] {LexType.TcharType.Of()},
-                    [LexType.TlongIntType] = new[] {LexType.TlongIntType.Of()},
+                    [LexType.TlongIntType] = new[]
+                        {LexType.TlongIntType.Of(), LexType.TlongIntType.Of(), LexType.TintType.Of()},
                 },
                 ["defs".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -52,12 +53,8 @@ namespace Language.Analyzer
                 },
                 ["C".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Teq] = new[] {"expr".Of()},
-                    [LexType.Tinth] = new[] {"expr".Of()},
-                    [LexType.Tinto] = new[] {"expr".Of()},
-                    [LexType.Tchar] = new[] {"expr".Of()},
-                    [LexType.Tlparen] = new[] {"expr".Of()},
-                    [LexType.Tnot] = new[] {"expr".Of()},
+                    [LexType.Teq] = new ITerm[] {LexType.Teq.Of(), "expr".Of()},
+                    [LexType.Tcomma] = new ITerm[] { },
                     [LexType.Tdelim] = new ITerm[] { },
                 },
                 ["params".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
@@ -85,9 +82,9 @@ namespace Language.Analyzer
                 },
                 ["ops".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.TintType] = new[] {"data".Of(), "ops".Of()},
-                    [LexType.TcharType] = new[] {"data".Of(), "ops".Of()},
-                    [LexType.TlongIntType] = new[] {"data".Of(), "ops".Of()},
+                    [LexType.TintType] = new ITerm[] {"data".Of(), LexType.Tdelim.Of(), "ops".Of()},
+                    [LexType.TcharType] = new ITerm[] {"data".Of(), LexType.Tdelim.Of(), "ops".Of()},
+                    [LexType.TlongIntType] = new ITerm[] {"data".Of(), LexType.Tdelim.Of(), "ops".Of()},
                     [LexType.Tident] = new[] {"op".Of(), "ops".Of()},
                     [LexType.Tfor] = new[] {"op".Of(), "ops".Of()},
                     [LexType.Tinth] = new[] {"op".Of(), "ops".Of()},
@@ -136,6 +133,7 @@ namespace Language.Analyzer
                     [LexType.Txor] = new[] {"N".Of()},
                     [LexType.Tor] = new[] {"N".Of()},
                     [LexType.Tand] = new[] {"N".Of()},
+                    [LexType.Teq] = new[] {"N".Of()},
                 },
                 ["N".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -149,6 +147,7 @@ namespace Language.Analyzer
                     [LexType.Txor] = new ITerm[] {LexType.Txor.Of(), "A4".Of()},
                     [LexType.Tor] = new ITerm[] {LexType.Tor.Of(), "A3".Of()},
                     [LexType.Tand] = new ITerm[] {LexType.Tand.Of(), "A5".Of()},
+                    [LexType.Teq] = new ITerm[] {LexType.Teq.Of(), "expr".Of()},
                 },
                 ["R".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -170,7 +169,7 @@ namespace Language.Analyzer
                 },
                 ["call".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tlparen] = new ITerm[] {LexType.Tlparen.Of(), "cparams".Of(), LexType.Trbracket.Of()},
+                    [LexType.Tlparen] = new ITerm[] {LexType.Tlparen.Of(), "cparams".Of(), LexType.Trparen.Of()},
                 },
                 ["cparams".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -201,6 +200,7 @@ namespace Language.Analyzer
                 {
                     [LexType.Tor] = new ITerm[] {LexType.Tor.Of(), "A3".Of(), "Q6".Of()},
                     [LexType.Trparen] = new ITerm[] { },
+                    [LexType.Tdelim] = new ITerm[] { },
                 },
                 ["A3".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -216,6 +216,7 @@ namespace Language.Analyzer
                 {
                     [LexType.Txor] = new ITerm[] {LexType.Txor.Of(), "A4".Of(), "Q1".Of()},
                     [LexType.Trparen] = new ITerm[] { },
+                    [LexType.Tdelim] = new ITerm[] { },
                 },
                 ["A4".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -286,26 +287,43 @@ namespace Language.Analyzer
                 ["Q2".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
                     [LexType.Tand] = new ITerm[] {LexType.Tand.Of(), "A5".Of(), "Q2".Of()},
+                    [LexType.Txor] = new ITerm[] { },
                     [LexType.Trparen] = new ITerm[] { },
+                    [LexType.Tdelim] = new ITerm[] { },
                 },
                 ["Q3".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
                     [LexType.Tlshift] = new[] {"L2".Of(), "Q3".Of()},
                     [LexType.Trshift] = new[] {"L2".Of(), "Q3".Of()},
+                    [LexType.Tand] = new ITerm[] { },
+                    [LexType.Txor] = new ITerm[] { },
                     [LexType.Trparen] = new ITerm[] { },
+                    [LexType.Tdelim] = new ITerm[] { },
                 },
                 ["Q4".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
                     [LexType.Tplus] = new[] {"L3".Of(), "Q4".Of()},
                     [LexType.Tminus] = new[] {"L3".Of(), "Q4".Of()},
+                    [LexType.Tlshift] = new ITerm[] { },
+                    [LexType.Trshift] = new ITerm[] { },
+                    [LexType.Tand] = new ITerm[] { },
+                    [LexType.Txor] = new ITerm[] { },
                     [LexType.Trparen] = new ITerm[] { },
+                    [LexType.Tdelim] = new ITerm[] { },
                 },
                 ["Q5".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
                     [LexType.Tmul] = new[] {"L4".Of(), "Q5".Of()},
                     [LexType.Tmod] = new[] {"L4".Of(), "Q5".Of()},
                     [LexType.Tdiv] = new[] {"L4".Of(), "Q5".Of()},
+                    [LexType.Tplus] = new ITerm[] { },
+                    [LexType.Tminus] = new ITerm[] { },
+                    [LexType.Tlshift] = new ITerm[] { },
+                    [LexType.Trshift] = new ITerm[] { },
+                    [LexType.Tand] = new ITerm[] { },
+                    [LexType.Txor] = new ITerm[] { },
                     [LexType.Trparen] = new ITerm[] { },
+                    [LexType.Tdelim] = new ITerm[] { },
                 },
                 ["L2".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {

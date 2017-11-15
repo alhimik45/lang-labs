@@ -1,6 +1,17 @@
-void main(){
-    int y;
-    long long int h;
-    y = h;
-    h = y;
+int g = 8;
+
+long long int j,k=6  ;
+
+void kek(){
+call();
+}
+
+//азаза
+void                            main(char args){
+char f = 5 +                /**rtrtrtr* */ 0x7649f - 0337 ^ 3 * ~1 >> 7;
+for(long long int fhghghgghghh654__54654 = 0xdeadbeed; 5+7; fhghghgghghh654__54654 = 67 / fhg){
+for(long long int fhghghgghghh654__54654 = 0xdeadbeef; 5+7; fhghghgghghh654__54654 = 67 / fhg)
+    kek();;;;
+    for(long long int fhghghgghghh654__54654 = 0xa0aa00; 5+7; fhghghgghghh654__54654 = 67 / fhg){}
+}
 }
