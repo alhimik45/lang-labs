@@ -1,28 +1,6 @@
-void lol(char y, int h){
-
-}
-
-void kek(){
-
-}
-
-void cheburek(long long int r, char y, char d){
- 
-}
-
-int t = 5;
 void main(){
-    t = 9;
-    char t = 'h';
-    int h = 322, k = 42;
-    lol(t,k);
-    kek();
-    cheburek(h,t,t);
-    {
-        t = 'k';
-        int t;
-        t = 1;
-    
-    }
-    t = 'k';
+    int y;
+    long long int h;
+    y = h;
+    h = y;
 }

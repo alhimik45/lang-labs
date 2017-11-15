@@ -17,7 +17,7 @@ namespace Language.Scan
         private int line = 1;
         private int Symbol => i - lineStart;
 
-        public bool HasNext => current + 1 < lexemas.Count && lexemas[current + 1].Type != LexType.Tend;
+        public bool HasNext => current + 1 < lexemas.Count && lexemas[current + 1].Type != LexType.Tendd;
         public Lexema Current => lexemas[current];
 
         public Scanner(string content)
@@ -183,6 +183,9 @@ namespace Language.Scan
             StartLexema();
             SetLexType(LexType.Tend);
             yield return EndLexema();
+            StartLexema();
+            SetLexType(LexType.Tendd);
+            yield return EndLexema();
         }
 
         private Lexema ParseBadSymbol()
@@ -275,9 +278,6 @@ namespace Language.Scan
                 AddChar();
             switch (curr.Tok)
             {
-                case "main":
-                    SetLexType(LexType.Tmain);
-                    break;
                 case "for":
                     SetLexType(LexType.Tfor);
                     break;

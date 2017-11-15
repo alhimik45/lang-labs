@@ -32,5 +32,6 @@
         Tlshift,
         Trshift,
         Tend = 666,
+        Tendd = 667,
         Terr = 9000
     }}

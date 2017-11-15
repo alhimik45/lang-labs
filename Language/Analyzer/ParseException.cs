@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Language.Scan;
 
 namespace Language.Analyzer
@@ -7,11 +8,11 @@ namespace Language.Analyzer
     {
         public Lexema Lexema { get; }
 
-        public ParseException(Lexema unexpected, LexType? expected) :
+        public ParseException(Lexema unexpected, params LexType[] expected) :
             base(//TODO
                 $"Unexpected {Enum.GetName(typeof(LexType), unexpected.Type)} at {unexpected.Line}:{unexpected.Symbol}" +
-                (expected != null
-                    ? $", expected {Enum.GetName(typeof(LexType), expected.Value)}"
+                (expected.Any()
+                    ? $", expected {string.Join(" or ",expected.Select(e => Enum.GetName(typeof(LexType),e)))}"
                     : ""))
         {
             Lexema = unexpected;
