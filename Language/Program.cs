@@ -11,7 +11,7 @@ namespace Language
         {
             var content = File.ReadAllText(args[0]);
             var sc = new Scanner(content);
-            var a = new Ll1SyntaxAnalyzer(sc);
+            var a = new PredSyntaxAnalyzer(sc);
             try
             {
                 a.Check();

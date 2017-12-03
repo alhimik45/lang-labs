@@ -1,5 +1,9 @@
-﻿namespace Language.Scan
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+namespace Language.Scan
 {
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum LexType
     {
         Tident = 1,

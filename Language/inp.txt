@@ -1,17 +1,32 @@
-int g = 8;
-
-long long int j,k=6  ;
-
+int g = a+2+2;
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+long long int j=9+9,k=5&6;
+8
 void kek(){
-call();
+    call();
 }
 
-//азаза
-void                            main(char args){
-char f = 5 +                /**rtrtrtr* */ 0x7649f - 0337 ^ 3 * ~1 >> 7;
-for(long long int fhghghgghghh654__54654 = 0xdeadbeed; 5+7; fhghghgghghh654__54654 = 67 / fhg){
-for(long long int fhghghgghghh654__54654 = 0xdeadbeef; 5+7; fhghghgghghh654__54654 = 67 / fhg)
-    kek();;;;
-    for(long long int fhghghgghghh654__54654 = 0xa0aa00; 5+7; fhghghgghghh654__54654 = 67 / fhg){}
-}
+void main(char args){{
+    char f = 5 + 0x7649f - 0337 ^ 3 * ~1 >> 7;
+    long long int j,k=6  ;
+    for(long long int fhghghgghghh654__54654 = 0xdeadbeed; a=5+7; fhghghgghghh654__54654 = 67 / fhg){
+    for(long long int b = 0xdeadbeef; c=5+7; b = 67 / fhg)
+        kek();;;;
+        long long int j,k=6  ;
+        for(long long int c = 0xa0aa00; b=3*8>>5; fhghghgghghh654__54654 = 67 / fhg){
+        long long int j,k=6, m = 12*89/56<<6  ;
+        dgf();
+        
+        }
+    }
+    long long int j,k=6, m = 12*89/56<<6  ;
+}}
+long long int j=9+9,k=5&6;
+void lmn(){
+    call();
+    long long int j,k=6, m = 12*89/56<<6  ;
+    for(long long int a = 0xdeadbeed; a+1+2+(8)-8; a = a + j / ~~~k){}
+    cal2();
+    long long int j,k=6, m = 12*89/56<<6  ;
+
 }
