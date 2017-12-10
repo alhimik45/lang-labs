@@ -34,11 +34,14 @@ namespace Language.Analyzer
             var neterms = rules.Select(r => r.n);
             foreach (var rule in rules)
             {
-                rule.l = rule.l.Select(r => r.Where(q => !neterms.Contains(q) && !string.IsNullOrWhiteSpace(q)).ToArray()).Where(a => a.Length > 0).ToArray();
+                rule.l = rule.l.Select(r => r.Where(q => !string.IsNullOrWhiteSpace(q)).ToArray())
+                    .Where(a => a.Length > 0).ToArray();
             }
+
             foreach (var rule in rules)
             {
-                rule.ll = rule.l.Select(r => r.Where(q => !neterms.Contains(q) && !string.IsNullOrWhiteSpace(q))
+                rule.ll = rule.l.Select(r => r.Where(q => !string.IsNullOrWhiteSpace(q))
+                    .Select(a => neterms.Contains(a) ? "Tneterm" : a)
                     .Select(a => JsonConvert.DeserializeObject<Lexema>(
                         @"{""Type"":""" + a.Replace("for", "Tfor").Replace("int", "TintType")
                             .Replace("long", "TlongIntType").Replace("char", "TcharType")
@@ -53,6 +56,7 @@ namespace Language.Analyzer
                             .Replace("восьмеричная", "Tinto").Replace("символьная", "Tchar") + @"""}").Type)
                     .ToArray()).ToArray();
             }
+
 //            throw new Exception();
         }
 
@@ -73,8 +77,7 @@ namespace Language.Analyzer
             var f = true;
             while (f)
             {
-                
-                var top = magaz.LastOrDefault() ?? new Lexema
+                var top = magaz.NN().LastOrDefault() ?? new Lexema
                 {
                     Line = l.Line,
                     Symbol = l.Symbol,
@@ -86,6 +89,10 @@ namespace Language.Analyzer
                 switch (rel)
                 {
                     case PredType.Nil:
+                        if (l.Type == LexType.Tneterm)
+                        {
+                            throw new ParseException(l.Tok, l);
+                        }
                         throw new ParseException(l);
                     case PredType.Lt:
                     case PredType.Eq:
@@ -100,34 +107,66 @@ namespace Language.Analyzer
                         {
                             sc.DropState();
                         }
+
                         break;
                     case PredType.Gt:
                         var osn = new List<Lexema>();
-                        while (magaz.Count > 1 &&
-                               table[magaz[magaz.Count - 2].Type][magaz[magaz.Count - 1].Type] == PredType.Eq)
+                        while (magaz.NN().Count > 1 &&
+                               table[magaz.NN()[magaz.NN().Count - 2].Type][magaz.NN()[magaz.NN().Count - 1].Type] ==
+                               PredType.Eq)
                         {
                             osn.Add(magaz.Last());
                             magaz.RemoveAt(magaz.Count - 1);
                         }
+
+                        while (magaz.Last().Type == LexType.Tneterm)
+                        {
+                            osn.Add(magaz.Last());
+                            magaz.RemoveAt(magaz.Count - 1);
+                        }
+
                         osn.Add(magaz.Last());
                         magaz.RemoveAt(magaz.Count - 1);
+                        while (magaz.LastOrDefault()?.Type == LexType.Tneterm)
+                        {
+                            osn.Add(magaz.Last());
+                            magaz.RemoveAt(magaz.Count - 1);
+                        }
+
                         osn.Reverse();
                         var ol = osn.Select(ll => ll.Type);
-                        var re = rules.SelectMany(r => r.ll).FirstOrDefault(r => r.SequenceEqual(ol));
-                        if (re == null)
+                        var ff = false;
+                        if (rules.Any(rule => rule.ll.FirstOrDefault(r => r.SequenceEqual(ol)) != null))
                         {
+                            magaz.Add(new Lexema
+                            {
+                                Type = LexType.Tneterm,
+                                Tok = $"Unexpected  {Enum.GetName(typeof(LexType),osn.First(oo => oo.Type != LexType.Tneterm).Type)}",
+                                Line = osn.First(oo => oo.Type != LexType.Tneterm).Line,
+                                Symbol = osn.First(oo => oo.Type != LexType.Tneterm).Symbol
+                            });
+                            ff = true;
+                        }
+
+                        if (!ff)
+                        {
+                            if (osn.First().Type == LexType.Tneterm)
+                            {
+                                throw new ParseException(osn.First().Tok, osn.First());                                
+                            }
                             throw new ParseException(osn.First());
                         }
-                        Console.WriteLine(string.Join(" ", osn.Select(e=>e.Tok)));
-                        if (l.Type == LexType.Tend && magaz.Count == 0)
+
+//                        Console.WriteLine(string.Join(" ", osn.Select(e=>e.Tok)));
+                        if (l.Type == LexType.Tend && magaz.NN().Count == 0)
                         {
                             f = false;
                         }
+
                         break;
                     default:
                         throw new InvalidOperationException($"wtf: {rel}");
                 }
-                
             }
         }
     }

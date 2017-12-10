@@ -35,6 +35,7 @@ namespace Language.Scan
         Teq,
         Tlshift,
         Trshift,
+        Tneterm,
         Tend = 666,
         Tendd = 667,
         Terr = 9000

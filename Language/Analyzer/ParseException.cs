@@ -9,13 +9,18 @@ namespace Language.Analyzer
         public Lexema Lexema { get; }
 
         public ParseException(Lexema unexpected, params LexType[] expected) :
-            base(//TODO
+            base( //TODO
                 $"Unexpected {Enum.GetName(typeof(LexType), unexpected.Type)} at {unexpected.Line}:{unexpected.Symbol}" +
                 (expected.Any()
-                    ? $", expected {string.Join(" or ",expected.Select(e => Enum.GetName(typeof(LexType),e)))}"
+                    ? $", expected {string.Join(" or ", expected.Select(e => Enum.GetName(typeof(LexType), e)))}"
                     : ""))
         {
             Lexema = unexpected;
+        }
+
+        public ParseException(string unexpected, Lexema u) :
+            base(unexpected + $" at {u.Line}:{u.Symbol}")
+        {
         }
     }
 }
