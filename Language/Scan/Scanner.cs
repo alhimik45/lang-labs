@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Language.Scan
 {
@@ -23,7 +24,8 @@ namespace Language.Scan
         public Scanner(string content)
         {
             states = new Stack<int>();
-            s = content;
+            var r = new Regex(@"(;\s*)+;");
+            s = r.Replace(content, ";");
             lexemas = Scan().ToList();
             current = -1;
         }

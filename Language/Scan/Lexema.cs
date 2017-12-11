@@ -6,6 +6,7 @@ namespace Language.Scan
     {
         public LexType Type = LexType.Terr;
         public string Tok = "";
+        public string TTok = "";
         public int Line { get; set; }
         public int Symbol { get; set; }
 

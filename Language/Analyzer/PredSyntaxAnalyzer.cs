@@ -35,7 +35,33 @@ namespace Language.Analyzer
             foreach (var rule in rules)
             {
                 rule.l = rule.l.Select(r => r.Where(q => !string.IsNullOrWhiteSpace(q)).ToArray())
-                    .Where(a => a.Length > 0).ToArray();
+                    .Where(a => a.Length > 0)
+                    .ToArray();
+                var ch = true;
+                while (ch)
+                {
+                    ch = false;
+                    var rr = new List<string[]>();
+                    foreach (var l in rule.l)
+                    {
+                        var i = l.ToList().FindIndex(r => r == "Enterm");
+                        if (i > -1)
+                        {
+                            var ff = l.ToList();
+                            ff[i] = "Tneterm";
+                            rr.Add(ff.ToArray());
+                            var gg = l.ToList();
+                            gg.RemoveAt(i);
+                            rr.Add(gg.ToArray());
+                            ch = true;
+                        }
+                        else
+                        {
+                            rr.Add(l);
+                        }
+                    }
+                    rule.l = rr.ToArray();
+                }
             }
 
             foreach (var rule in rules)
@@ -129,7 +155,9 @@ namespace Language.Analyzer
                         magaz.RemoveAt(magaz.Count - 1);
                         while (magaz.LastOrDefault()?.Type == LexType.Tneterm)
                         {
-                            osn.Add(magaz.Last());
+                            if(!magaz.Last().TTok.StartsWith("Unexpected  Tdelim") && !magaz.Last().TTok.StartsWith("Unexpected  Tfor"))
+                                osn.Add(magaz.Last());
+                            
                             magaz.RemoveAt(magaz.Count - 1);
                         }
 
@@ -138,13 +166,15 @@ namespace Language.Analyzer
                         var ff = false;
                         if (rules.Any(rule => rule.ll.FirstOrDefault(r => r.SequenceEqual(ol)) != null))
                         {
-                            magaz.Add(new Lexema
-                            {
-                                Type = LexType.Tneterm,
-                                Tok = $"Unexpected  {Enum.GetName(typeof(LexType),osn.First(oo => oo.Type != LexType.Tneterm).Type)}",
-                                Line = osn.First(oo => oo.Type != LexType.Tneterm).Line,
-                                Symbol = osn.First(oo => oo.Type != LexType.Tneterm).Symbol
-                            });
+                            if(magaz.Count != 0)
+                                magaz.Add(new Lexema
+                                {
+                                    Type = LexType.Tneterm,
+                                    Tok = $"Unexpected  {Enum.GetName(typeof(LexType),l.Type)}",
+                                    TTok = $"Unexpected  {Enum.GetName(typeof(LexType),osn.First(oo => oo.Type != LexType.Tneterm).Type)}",
+                                    Line = l.Line,
+                                    Symbol = l.Symbol
+                                });
                             ff = true;
                         }
 
