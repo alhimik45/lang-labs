@@ -123,6 +123,11 @@ namespace Language.Analyzer
                     case PredType.Lt:
                     case PredType.Eq:
                         magaz.Add(l);
+                        if (magaz.Last().Type == LexType.Teq && magaz.Count > 3 &&
+                            magaz[magaz.Count - 3].Type != LexType.Tident && magaz[magaz.Count - 3].Type != LexType.TintType && magaz[magaz.Count - 3].Type != LexType.TcharType && magaz[magaz.Count - 3].Type != LexType.Tcomma && magaz[magaz.Count - 3].Type != LexType.Tdelim && magaz[magaz.Count - 3].Type != LexType.Tlparen)
+                        {
+                            throw new ParseException(l);
+                        }
                         sc.PushState();
                         l = sc.Next();
                         if (l.Type == LexType.Tend)

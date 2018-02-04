@@ -20,8 +20,8 @@ void main(char args){
         }
     }
     long long int j,k=6, m = 12*89/56<<6  ;
-}
-long long int j=9+9 +k=5&6+3;
+}call();
+long long int j=56+(y=9);
 void lmn(){
     call();
     long long int j,k=6, m = 12*89/56<<6  ;
