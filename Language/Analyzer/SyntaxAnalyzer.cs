@@ -29,6 +29,7 @@ namespace Language.Analyzer
                 {
                     throw lastEx;
                 }
+
                 throw new ParseException(sc.Next(), LexType.Tend);
             }
         }
@@ -100,6 +101,7 @@ namespace Language.Analyzer
                     {
                         throw new SemanticException("Extra function parameter", ll);
                     }
+
                     Mismatch(fn.Params[count - 1], eType, ll);
                     Maybe(() => Many(() =>
                     {
@@ -113,6 +115,7 @@ namespace Language.Analyzer
                             {
                                 throw new SemanticException("Extra function parameter", ll);
                             }
+
                             Mismatch(fn.Params[count - 1], eeType, lll);
                         });
                     }));
@@ -122,6 +125,7 @@ namespace Language.Analyzer
                 {
                     throw new SemanticException("Wrong number of function parameters", llll);
                 }
+
                 L(LexType.Tdelim);
             });
         }
@@ -242,16 +246,13 @@ namespace Language.Analyzer
                 {
                     var var = L(LexType.Tident);
                     type = FindVar(var).Type;
-                    Maybe(() => Many(() =>
+                    L(LexType.Teq);
+                    var l = GetNextLex();
+                    Sure(() =>
                     {
-                        L(LexType.Teq);
-                        var l = GetNextLex();
-                        Sure(() =>
-                        {
-                            var eType = A2();
-                            Mismatch(type, eType, l);
-                        });
-                    }));
+                        var eType = Expr();
+                        Mismatch(type, eType, l);
+                    });
                 },
                 () => { type = A2(); });
             return type;
@@ -388,6 +389,7 @@ namespace Language.Analyzer
                     errors.Add(e);
                 }
             }
+
             throw errors.MaxBy(e => e.Lexema);
         }
 
@@ -399,6 +401,7 @@ namespace Language.Analyzer
             {
                 throw new ParseException(l, type);
             }
+
             return l;
         }
 
@@ -447,6 +450,7 @@ namespace Language.Analyzer
                 throw new SemanticException($"Cannot redefine variable: `{name}`", var,
                     $"previous declaration at {prev.Location.Line}:{prev.Location.Symbol}");
             }
+
             return currentFrame[name] = VarInfo.Of(type, var);
         }
 
@@ -469,6 +473,7 @@ namespace Language.Analyzer
             {
                 throw new SemanticException($"Undefined variable: {lex.Tok}", lex);
             }
+
             return res;
         }
     }

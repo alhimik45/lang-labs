@@ -1,28 +1,36 @@
-void lol(char y, int h){
+int a;
+int g = a+2+2;
 
-}
+long long int j=9+9,k=5&6;
+
+void call(){}
 
 void kek(){
-
+    call();
 }
 
-void cheburek(long long int r, char y, char d){
- 
-}
-
-int t = 5;
-void main(){
-    t = 9;
-    char t = 'h';
-    int h = 322, k = 42;
-    lol(t,k);
-    kek();
-    cheburek(h,t,t);
-    {
-        t = 'k';
-        int t;
-        t = 1;
-    
+void main(char args){
+    int f = 5 + 0x7649f - 0337 ^ 3 * ~1 >> 7;
+    char fd = 'u';
+    long long int j,k=6  ;
+    for(long long int fhg = 0xdeadbeed; a=5+7; fhg = 67 / fhg){
+    for(long long int b = 0xdeadbeef; b=5+7; b = 67 / fhg)
+        kek();;;;
+        long long int j,k=6  ;
+        for(long long int c = 0xa0aa00; c=3*8>>5; fgh = 67 / fhg){
+        long long int j,k=6, m = 12*89/56<<6  ;
+        dgf();
+        
+        }
     }
-    t = 'k';
+    long long int j,k=6, m = 12*89/56<<6  ;
+}call();
+long long int j=56+(y=9);
+void lmn(){
+    call();
+    long long int j,k=6, m = 12*89/56<<6  ;
+    for(long long int a = 0xdeadbeed; a+1+2+(8)+8; a = a + j / ~~~k){}
+    cal2();
+    long long int j,k=6, m = 12*89/56<<6  ;
+
 }
