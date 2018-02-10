@@ -36,7 +36,6 @@ namespace Language
                 Console.WriteLine(e.Message);
                 Environment.Exit(1);
             }
-            Console.WriteLine("Program is correct!");
         }
     }
 }

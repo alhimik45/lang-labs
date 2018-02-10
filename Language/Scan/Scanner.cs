@@ -12,44 +12,45 @@ namespace Language.Scan
         private readonly Stack<int> states;
         private int i;
         private Lexema curr;
-        private int current;
         private int lineStart;
         private int line = 1;
         private int Symbol => i - lineStart;
 
-        public bool HasNext => current + 1 < lexemas.Count && lexemas[current + 1].Type != LexType.Tend;
-        public Lexema Current => lexemas[current];
+        public int Last => lexemas.Count-1;
+        public int Pos;
+        public bool HasNext => Pos + 1 < lexemas.Count && lexemas[Pos + 1].Type != LexType.Tend;
+        public Lexema Current => lexemas[Pos];
 
         public Scanner(string content)
         {
             states = new Stack<int>();
             s = content;
             lexemas = Scan().ToList();
-            current = -1;
+            Pos = -1;
         }
 
         public Lexema Next()
         {
             if (!HasNext)
             {
-                return lexemas[current + 1];
+                return lexemas[Pos + 1];
             }
-            var l = lexemas[++current];
+            var l = lexemas[++Pos];
             if (l.Type == LexType.Terr)
             {
                 throw new TokenException(l);
             }
             return l;
         }
-
+        
         public void PushState()
         {
-            states.Push(current);
+            states.Push(Pos);
         }
 
         public void PopState()
         {
-            current = states.Pop();
+            Pos = states.Pop();
         }
 
         public void DropState()
@@ -254,7 +255,7 @@ namespace Language.Scan
 
         private Lexema CharParse()
         {
-            if (i < s.Length && (s[i] >= '0' && s[i] <= '9' || s[i] >= 'a' && s[i] <= 'z'))
+            if (i < s.Length)
             {
                 AddChar();
                 if (s[i] == '\'')
@@ -379,11 +380,11 @@ namespace Language.Scan
                 if (curr.Type == LexType.Tintd)
                 {
                     // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                    Int32.Parse(curr.Tok);
+                    int.Parse(curr.Tok);
                 }
                 else if (curr.Type == LexType.Tinth && curr.Tok.Substring(2).Length > 0)
                 {
-                    Int32.Parse(curr.Tok.Substring(2), NumberStyles.HexNumber);
+                    int.Parse(curr.Tok.Substring(2), NumberStyles.HexNumber);
                 }
                 else if (curr.Type == LexType.Tinto)
                 {

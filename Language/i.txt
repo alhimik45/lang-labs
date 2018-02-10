@@ -1,36 +1,18 @@
-int a;
+int a=1;
 int g = a+2+2;
 
-long long int j=9+9,k=5&6;
-
-void call(){}
-
-void kek(){
-    call();
+void inner(int l){
+    for(int j = 69; j; j = j / 2){
+        print(l,'e',j);
+    }
 }
 
-void main(char args){
-    int f = 5 + 0x7649f - 0337 ^ 3 * ~1 >> 7;
-    char fd = 'u';
-    long long int j,k=6  ;
-    for(long long int fhg = 0xdeadbeed; a=5+7; fhg = 67 / fhg){
-    for(long long int b = 0xdeadbeef; b=5+7; b = 67 / fhg)
-        kek();;;;
-        long long int j,k=6  ;
-        for(long long int c = 0xa0aa00; c=3*8>>5; fgh = 67 / fhg){
-        long long int j,k=6, m = 12*89/56<<6  ;
-        dgf();
-        
+void main(){
+    for(int i = 5; i; i = i - 1){
+        print('k');
+        for(int j = 0; 5 - j; j = j + 1){
+            print('e',j);
         }
+        inner(i);
     }
-    long long int j,k=6, m = 12*89/56<<6  ;
-}call();
-long long int j=56+(y=9);
-void lmn(){
-    call();
-    long long int j,k=6, m = 12*89/56<<6  ;
-    for(long long int a = 0xdeadbeed; a+1+2+(8)+8; a = a + j / ~~~k){}
-    cal2();
-    long long int j,k=6, m = 12*89/56<<6  ;
-
 }
