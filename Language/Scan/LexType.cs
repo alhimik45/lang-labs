@@ -32,6 +32,8 @@
         Tlshift,
         Trshift,
         Treturn,
+        Tless,
+        Tlesseq,
         Tend = 666,
         Terr = 9000
     }}

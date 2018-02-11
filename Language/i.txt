@@ -1,4 +1,4 @@
-int a=1;
+/*int a=1;
 int g = a+2+2;
 
 void inner(int l){
@@ -15,4 +15,26 @@ void main(){
         }
         inner(i);
     }
+}*/
+
+int fibres;
+void fib(int n) {
+    for(;n<3;){
+        fibres = 1;
+        return;
+    }
+    fib(n-1);
+    int f1 = fibres;
+    fib(n-2);
+    fibres = fibres + f1;
+}
+
+void f(int n){
+    fib(n);
+    print(fibres);
+}
+
+void main(){
+    for(int i = 1; i < 10; i = i + 1)
+        f(i);
 }

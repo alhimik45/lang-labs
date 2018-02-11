@@ -129,10 +129,23 @@ namespace Language.Scan
                 {
                     StartLexema();
                     AddChar();
-                    if (i < s.Length && s[i] == '<')
+                    if (i < s.Length)
                     {
-                        AddChar();
-                        SetLexType(LexType.Tlshift);
+                        if (s[i] == '<')
+                        {
+                            AddChar();
+                            SetLexType(LexType.Tlshift);
+                            yield return EndLexema();
+                            continue;
+                        }
+                        if (s[i] == '=')
+                        {
+                            AddChar();
+                            SetLexType(LexType.Tlesseq);
+                            yield return EndLexema();
+                            continue;
+                        }
+                        SetLexType(LexType.Tless);
                         yield return EndLexema();
                         continue;
                     }
@@ -293,6 +306,9 @@ namespace Language.Scan
                     break;
                 case "char":
                     SetLexType(LexType.TcharType);
+                    break;
+                case "return":
+                    SetLexType(LexType.Treturn);
                     break;
                 default:
                     SetLexType(LexType.Tident);

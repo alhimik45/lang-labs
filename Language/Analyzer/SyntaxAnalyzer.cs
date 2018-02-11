@@ -16,6 +16,7 @@ namespace Language.Analyzer
         private Dictionary<LexType, Func<object, object, object>> binops;
 
         private bool interpret = true;
+        private bool ret = false;
 
         private static long GetLong(object val)
         {
@@ -52,7 +53,9 @@ namespace Language.Analyzer
                     [LexType.Tminus] = (a, b) => GetLong(a) - GetLong(b),
                     [LexType.Tlshift] = (a, b) => GetLong(a) << (int) GetLong(b),
                     [LexType.Trshift] = (a, b) => GetLong(a) >> (int) GetLong(b),
-                    [LexType.Tplus] = (a, b) => GetLong(a) + GetLong(b)
+                    [LexType.Tplus] = (a, b) => GetLong(a) + GetLong(b),
+                    [LexType.Tless] = (a, b) => GetLong(a) < GetLong(b) ? 1 : 0,
+                    [LexType.Tlesseq] = (a, b) => GetLong(a) <= GetLong(b) ? 1 : 0
                 };
             NewEnv();
         }
@@ -120,7 +123,15 @@ namespace Language.Analyzer
                 For,
                 Funcall,
                 () => L(LexType.Tdelim),
-                () => L(LexType.Treturn),
+                () =>
+                {
+                    L(LexType.Treturn);
+                    if (interpret)
+                    {
+                        ret = true;
+                        interpret = false;
+                    }
+                },
                 Block,
                 Data
             );
@@ -188,15 +199,16 @@ namespace Language.Analyzer
                 L(LexType.Tfor);
                 var posU = -1;
                 var posC = -1;
-                var posS = -1;
+                int posS;
                 var lflInt = false;
-                var cond = true;
+                var cond = interpret;
                 Sure(() =>
                 {
                     L(LexType.Tlparen);
                     Maybe(() =>
                     {
-                        Data();
+                        Maybe(Data);
+                        Maybe(() => L(LexType.Tdelim));
                         posU = sc.Pos;
                         Sure(() =>
                         {
@@ -224,9 +236,13 @@ namespace Language.Analyzer
                     });
                     L(LexType.Trparen);
                     posS = sc.Pos;
-                    interpret = cond;
+                    if (lflInt)
+                    {
+                        interpret = cond;
+                    }
+
                     Statement();
-                    while (cond)
+                    while (!ret && cond)
                     {
                         sc.Pos = posC;
                         Maybe(() => Expr());
@@ -242,10 +258,12 @@ namespace Language.Analyzer
                         interpret = cond;
                         sc.Pos = posS;
                         Statement();
-                        if (!cond)
-                        {
-                            interpret = lflInt;
-                        }
+                    }
+
+                    interpret = lflInt;
+                    if (ret)
+                    {
+                        interpret = false;
                     }
                 });
             }
@@ -402,7 +420,12 @@ namespace Language.Analyzer
 
         private (SemType, object) A4()
         {
-            return ExprPart(A5, LexType.Tand);
+            return ExprPart(Yoy, LexType.Tand);
+        }
+
+        private (SemType, object) Yoy()
+        {
+            return ExprPart(A5, LexType.Tless, LexType.Tlesseq);
         }
 
         private (SemType, object) A5()
@@ -646,6 +669,8 @@ namespace Language.Analyzer
                 }
 
                 Block();
+                interpret = true;
+                ret = false;
             }
 
             sc.Pos = prevPos;
