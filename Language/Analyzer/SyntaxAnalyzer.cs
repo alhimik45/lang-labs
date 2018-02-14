@@ -12,6 +12,8 @@ namespace Language.Analyzer
         private readonly Scanner sc;
         private ParseException lastEx;
         private readonly List<Dictionary<string, VarInfo>> environment;
+        private readonly List<string> envowners;
+        private string currentFunction;
 
         private Dictionary<LexType, Func<object, object, object>> binops;
 
@@ -20,7 +22,8 @@ namespace Language.Analyzer
 
         private static long GetLong(object val)
         {
-            return val is int i ? i : (long) val;
+            return val is int i ? i :
+                val is char c ? c : (long) val;
         }
 
         public SyntaxAnalyzer(Scanner sc)
@@ -33,6 +36,8 @@ namespace Language.Analyzer
                     ["print"] = new VarInfo(SemType.Function, null, "print")
                 }
             };
+            currentFunction = null;
+            envowners = new List<string> {currentFunction};
             binops =
                 new Dictionary<LexType, Func<object, object, object>>
                 {
@@ -89,6 +94,8 @@ namespace Language.Analyzer
             environment.Last()[nameL.Tok].Name = nameL.Tok;
             Sure(() =>
             {
+                var prevFn = currentFunction;
+                currentFunction = nameL.Tok;
                 using (NewEnv())
                 {
                     L(LexType.Tlparen);
@@ -99,6 +106,8 @@ namespace Language.Analyzer
                     Block();
                     interpret = true;
                 }
+
+                currentFunction = prevFn;
             });
         }
 
@@ -401,11 +410,11 @@ namespace Language.Analyzer
             if (type == null) return;
             var t = type == SemType.LongLongInt ? SemType.Int : type;
             var tt = eType == SemType.LongLongInt ? SemType.Int : eType;
-            if (t != tt)
-            {
-                throw new SemanticException("Expression type mismatch", l,
-                    $"cannot assign {eType.ToStr()} to {type.ToStr()}");
-            }
+//            if (t != tt)
+//            {
+//                throw new SemanticException("Expression type mismatch", l,
+//                    $"cannot assign {eType.ToStr()} to {type.ToStr()}");
+//            }
         }
 
         private (SemType, object) A2()
@@ -593,7 +602,8 @@ namespace Language.Analyzer
         private Env NewEnv()
         {
             environment.Add(new Dictionary<string, VarInfo>());
-            return new Env(environment);
+            envowners.Add(currentFunction);
+            return new Env(environment, envowners);
         }
 
         private VarInfo AddVar(Lexema var, SemType type)
@@ -607,7 +617,9 @@ namespace Language.Analyzer
                     $"previous declaration at {prev.Location.Line}:{prev.Location.Symbol}");
             }
 
-            return currentFrame[name] = VarInfo.Of(type, var);
+            currentFrame[name] = VarInfo.Of(type, var);
+            currentFrame[name].Name = name;
+            return currentFrame[name];
         }
 
         private void SetVar(VarInfo varInfo, object value)
@@ -617,14 +629,40 @@ namespace Language.Analyzer
                 return;
             }
 
+            Cast(varInfo.Type, ref value);
+            Console.WriteLine($"{varInfo.Name} = {VarValue(value)}");
             varInfo.Value = value;
+        }
+
+        private void Cast(SemType type, ref object value)
+        {
+            var v = GetLong(value);
+            switch (type)
+            {
+                case SemType.Int:
+                    value = (int) v;
+                    break;
+                case SemType.LongLongInt:
+                    value = v;
+                    break;
+                case SemType.Char:
+                    if (v < 0 || v > 65535)
+                    {
+                        throw new SemanticException($"Wrong char code: {v}", sc.Current);
+                    }
+
+                    value = (char) v;
+                    break;
+            }
         }
 
         private VarInfo TryFindVar(string name)
         {
-            var origFrame = ((IEnumerable<Dictionary<string, VarInfo>>) environment)
-                .Reverse().FirstOrDefault(frame => frame.ContainsKey(name));
-            return origFrame?[name];
+            var origFrame = environment.Zip(envowners, (env, owner) => new {env, owner}).Reverse()
+                .FirstOrDefault(frame =>
+                    frame.env.ContainsKey(name) && (frame.owner == null || frame.owner == currentFunction));
+
+            return origFrame?.env?[name];
         }
 
         private VarInfo TryFindVar(Lexema lex)
@@ -652,20 +690,24 @@ namespace Language.Analyzer
 
             if (fn.Name == "print")
             {
-                Console.WriteLine(string.Join("", pars));
+                Console.WriteLine(string.Join("", pars.Select(VarValue)));
                 return;
             }
 
             var prevPos = sc.Pos;
             sc.Pos = fn.Pos;
+            var prevFn = currentFunction;
+            currentFunction = fn.Name;
             using (NewEnv())
             {
                 var currentFrame = environment.Last();
                 var i = 0;
                 foreach (var param in fn.Params)
                 {
+                    var val = pars[i++];
                     currentFrame[param.name] = VarInfo.Of(param.type, null);
-                    currentFrame[param.name].Value = pars[i++];
+                    Cast(param.type, ref val);
+                    currentFrame[param.name].Value = val;
                 }
 
                 Block();
@@ -673,7 +715,13 @@ namespace Language.Analyzer
                 ret = false;
             }
 
+            currentFunction = prevFn;
             sc.Pos = prevPos;
+        }
+
+        private static object VarValue(object o)
+        {
+            return o is char c ? $"'{c}'" : o;
         }
     }
 }
