@@ -36,7 +36,9 @@ namespace Language
                 Console.WriteLine(e.Message);
                 Environment.Exit(1);
             }
+
             Console.WriteLine("Program is correct!");
+            File.WriteAllText("code.txt", a.Ir.ToListing());
         }
     }
 }

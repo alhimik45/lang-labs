@@ -22,7 +22,7 @@ void main(char args){
     long long int j,k=6, m = 12*89/56<<6  ;
 }
 long long int j=56+(9);
-void lmn(){
+void lmn(int oo, long long int ee){
     call();
     j = 9;
     long long int j,k=6, m = 12*89/56<<6  ;

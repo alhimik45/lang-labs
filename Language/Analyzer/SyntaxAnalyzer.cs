@@ -434,7 +434,7 @@ namespace Language.Analyzer
         private Env NewEnv()
         {
             environment.Add(new Dictionary<string, VarInfo>());
-            return new Env(environment);
+            return new Env(environment, null);
         }
 
         private VarInfo AddVar(Lexema var, SemType type)

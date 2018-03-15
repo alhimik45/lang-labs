@@ -246,3 +246,5 @@ deploy/
 
 .idea
 /*/Properties/AssemblyTitle.cs
+
+Language/code.txt

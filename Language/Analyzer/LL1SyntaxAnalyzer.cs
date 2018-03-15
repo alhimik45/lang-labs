@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Language.Compiler;
 using Language.Scan;
 
 namespace Language.Analyzer
@@ -8,6 +10,15 @@ namespace Language.Analyzer
     {
         private readonly Scanner sc;
         private readonly List<ITerm> magaz = new List<ITerm>();
+        private int counter;
+        private readonly List<string> scopes = new List<string> {"global"};
+        private string Scope => string.Join('/', scopes);
+        private readonly List<Dictionary<string, VarInfo>> environment = new List<Dictionary<string, VarInfo>>();
+        private Lexema lastId;
+        private SemType ttype;
+        private SemType lastType;
+
+        public readonly List<Triad> Ir = new List<Triad>();
 
         private readonly Dictionary<Neterm, Dictionary<LexType, IEnumerable<ITerm>>> table = new
             Dictionary<Neterm, Dictionary<LexType, IEnumerable<ITerm>>>
@@ -19,8 +30,9 @@ namespace Language.Analyzer
                     [LexType.TlongIntType] = new ITerm[] {"data".Of(), LexType.Tdelim.Of(), "program".Of()},
                     [LexType.TvoidType] = new ITerm[]
                     {
-                        LexType.TvoidType.Of(), LexType.Tident.Of(), LexType.Tlparen.Of(), "params".Of(),
-                        LexType.Trparen.Of(), "block".Of(), "program".Of()
+                        LexType.TvoidType.Of(), LexType.Tident.Of(), NewFunc.Of(), LexType.Tlparen.Of(), "params".Of(),
+                        LexType.Trparen.Of(), GenFunctionProlog.Of(), "block".Of(), GenFunctionEpilog.Of(),
+                        "program".Of()
                     },
                     [LexType.Trparen] = new ITerm[] { },
                     [LexType.Tend] = new ITerm[] { },
@@ -33,10 +45,10 @@ namespace Language.Analyzer
                 },
                 ["type".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.TintType] = new[] {LexType.TintType.Of()},
-                    [LexType.TcharType] = new[] {LexType.TcharType.Of()},
-                    [LexType.TlongIntType] = new[]
-                        {LexType.TlongIntType.Of(), LexType.TlongIntType.Of(), LexType.TintType.Of()},
+                    [LexType.TintType] = new ITerm[] {LexType.TintType.Of(), SaveType.Of()},
+                    [LexType.TcharType] = new ITerm[] {LexType.TcharType.Of(), SaveType.Of()},
+                    [LexType.TlongIntType] = new ITerm[]
+                        {LexType.TlongIntType.Of(), LexType.TlongIntType.Of(), SaveType.Of(), LexType.TintType.Of()},
                 },
                 ["defs".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -72,9 +84,9 @@ namespace Language.Analyzer
                 },
                 ["param".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.TintType] = new ITerm[] {"type".Of(), LexType.Tident.Of()},
-                    [LexType.TcharType] = new ITerm[] {"type".Of(), LexType.Tident.Of()},
-                    [LexType.TlongIntType] = new ITerm[] {"type".Of(), LexType.Tident.Of()},
+                    [LexType.TintType] = new ITerm[] {"type".Of(), LexType.Tident.Of(), AddParam.Of()},
+                    [LexType.TcharType] = new ITerm[] {"type".Of(), LexType.Tident.Of(), AddParam.Of()},
+                    [LexType.TlongIntType] = new ITerm[] {"type".Of(), LexType.Tident.Of(), AddParam.Of()},
                 },
                 ["block".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -141,7 +153,7 @@ namespace Language.Analyzer
                     [LexType.Tmod] = new ITerm[] {LexType.Tmod.Of(), "A8".Of(), "Q5".Of()},
                     [LexType.Tdiv] = new ITerm[] {LexType.Tdiv.Of(), "A8".Of(), "Q5".Of()},
                     [LexType.Tlshift] = new ITerm[] {LexType.Tlshift.Of(), "A6".Of(), "Q3".Of()},
-                    [LexType.Trshift] = new ITerm[] {LexType.Trshift.Of(), "A6".Of(),"Q3".Of()},
+                    [LexType.Trshift] = new ITerm[] {LexType.Trshift.Of(), "A6".Of(), "Q3".Of()},
                     [LexType.Tplus] = new ITerm[] {LexType.Tplus.Of(), "A7".Of(), "Q4".Of()},
                     [LexType.Tminus] = new ITerm[] {LexType.Tminus.Of(), "A7".Of(), "Q4".Of()},
                     [LexType.Txor] = new ITerm[] {LexType.Txor.Of(), "A4".Of(), "Q1".Of()},
@@ -352,6 +364,7 @@ namespace Language.Analyzer
         public Ll1SyntaxAnalyzer(Scanner sc)
         {
             this.sc = sc;
+            NewEnv();
         }
 
         public void Check()
@@ -365,11 +378,13 @@ namespace Language.Analyzer
             {
                 throw new ParseException(l, inps.Keys.ToArray());
             }
+
             magaz.AddRange(inps[l.Type].Reverse());
             while (magaz.Count > 0)
             {
                 var term = magaz.Last() as Term;
                 var neterm = magaz.Last() as Neterm;
+                var delta = magaz.Last() as Delta;
                 if (term != null)
                 {
                     var ll = sc.Next();
@@ -377,6 +392,24 @@ namespace Language.Analyzer
                     {
                         throw new ParseException(ll, term.Type);
                     }
+
+                    switch (ll.Type)
+                    {
+                        case LexType.Tident:
+                            lastId = ll;
+                            break;
+                        case LexType.TlongIntType:
+                        case LexType.TintType:
+                        case LexType.TcharType:
+                            ttype = new Dictionary<LexType, SemType>
+                            {
+                                [LexType.TlongIntType] = SemType.LongLongInt,
+                                [LexType.TintType] = SemType.Int,
+                                [LexType.TcharType] = SemType.Char
+                            }[ll.Type];
+                            break;
+                    }
+
                     magaz.RemoveAt(magaz.Count - 1);
                 }
                 else if (neterm != null)
@@ -389,11 +422,101 @@ namespace Language.Analyzer
                     {
                         throw new ParseException(ll, inpss.Keys.ToArray());
                     }
+
                     magaz.RemoveAt(magaz.Count - 1);
                     magaz.AddRange(inpss[ll.Type].Reverse());
                 }
+                else
+                {
+                    delta?.Action(this);
+                    magaz.RemoveAt(magaz.Count - 1);
+                }
             }
         }
+
+        private void Gen(Operation operation, string arg1 = null, string arg2 = null)
+        {
+            Ir.Add(Triad.Of(operation, arg1, arg2));
+        }
+
+        private Env NewEnv()
+        {
+            scopes.Add((++counter).ToString());
+            environment.Add(new Dictionary<string, VarInfo>());
+            return new Env(environment, scopes);
+        }
+
+        private VarInfo AddVar(Lexema var, SemType type)
+        {
+            var name = var.Tok;
+            var currentFrame = environment.Last();
+            if (currentFrame.ContainsKey(name))
+            {
+                var prev = currentFrame[name];
+                throw new SemanticException($"Cannot redefine variable: `{name}`", var,
+                    $"previous declaration at {prev.Location.Line}:{prev.Location.Symbol}");
+            }
+
+            return currentFrame[name] = VarInfo.Of(type, var);
+        }
+
+        private VarInfo TryFindVar(string name)
+        {
+            var origFrame = ((IEnumerable<Dictionary<string, VarInfo>>) environment)
+                .Reverse().FirstOrDefault(frame => frame.ContainsKey(name));
+            return origFrame?[name];
+        }
+
+        private VarInfo TryFindVar(Lexema lex)
+        {
+            return TryFindVar(lex.Tok);
+        }
+
+        private VarInfo FindVar(Lexema lex)
+        {
+            var res = TryFindVar(lex);
+            if (res == null)
+            {
+                throw new SemanticException($"Undefined variable: {lex.Tok}", lex);
+            }
+
+            return res;
+        }
+
+        private string fnName;
+
+        private static readonly Action<Ll1SyntaxAnalyzer> NewFunc = a =>
+        {
+            a.Gen(Operation.Proc, a.fnName = a.lastId.Tok);
+            a.AddVar(a.lastId, SemType.Function);
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> AddParam = a =>
+        {
+            a.AddVar(a.lastId, a.lastType);
+            var fn = a.TryFindVar(a.fnName);
+            fn.AddParam(a.lastType);
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionProlog = a =>
+        {
+            var fn = a.TryFindVar(a.fnName);
+            var totalSize = fn.Params.Select(t => new Dictionary<SemType, int>
+            {
+                [SemType.Char] = 1,
+                [SemType.Int] = 4,
+                [SemType.LongLongInt] = 8
+            }[t]).Sum();
+            a.Gen(Operation.Reserve, totalSize.ToString());
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionEpilog = a =>
+        {
+            a.Gen(Operation.Ret);
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> SaveType = a => { a.lastType = a.ttype; };
+        private static readonly Action<Ll1SyntaxAnalyzer> aa = a => { };
     }
 
     public interface ITerm
@@ -420,10 +543,12 @@ namespace Language.Analyzer
             {
                 return false;
             }
+
             if (ReferenceEquals(this, obj))
             {
                 return true;
             }
+
             return obj.GetType() == GetType() && Equals((Neterm) obj);
         }
 
@@ -453,10 +578,12 @@ namespace Language.Analyzer
             {
                 return false;
             }
+
             if (ReferenceEquals(this, obj))
             {
                 return true;
             }
+
             return obj.GetType() == GetType() && Equals((Term) obj);
         }
 
@@ -466,9 +593,58 @@ namespace Language.Analyzer
         }
     }
 
+    public class Delta : ITerm
+    {
+        public Action<Ll1SyntaxAnalyzer> Action { get; }
+
+        public Delta(Action<Ll1SyntaxAnalyzer> action)
+        {
+            Action = action;
+        }
+
+        private bool Equals(Delta other)
+        {
+            return Equals(Action, other.Action);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            return obj.GetType() == GetType() && Equals((Delta) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return Action != null ? Action.GetHashCode() : 0;
+        }
+    }
+
     public static class Ext
     {
         public static Neterm Of(this string name) => new Neterm(name);
         public static Term Of(this LexType type) => new Term(type);
+        public static Delta Of(this Action<Ll1SyntaxAnalyzer> action) => new Delta(action);
+
+        public static string ToListing(this IEnumerable<Triad> program)
+        {
+            var s = "";
+            var i = 0;
+            foreach (var triad in program)
+            {
+                s += $"{i}) {triad.Operation.ToStr()} {triad.Arg1} {triad.Arg2}\n";
+                ++i;
+            }
+
+            return s;
+        }
     }
 }
