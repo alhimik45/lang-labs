@@ -20,10 +20,11 @@ void main(char args){
         }
     }
     long long int j,k=6, m = 12*89/56<<6  ;
-}call();
-long long int j=56+(y=9);
+}
+long long int j=56+(9);
 void lmn(){
     call();
+    j = 9;
     long long int j,k=6, m = 12*89/56<<6  ;
     for(long long int a = 0xdeadbeed; a+1+2+(8)+8; a = a + j / ~~~k){}
     cal2();
