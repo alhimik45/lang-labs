@@ -8,7 +8,6 @@
         LocVar,
         Ret,
         Assign,
-        Load,
         Add,
         Sub,
         Mul,

@@ -608,8 +608,7 @@ namespace Language.Analyzer
         private static readonly Action<Ll1SyntaxAnalyzer> IdentToR = a =>
         {
             var v = a.FindVar(a.lastId);
-            a.Gen(Operation.Load, v.FullName);
-            a.r.Push(TriadResult.Of(a.Ir.Count - 1, v.Type));
+            a.r.Push(VariableResult.Of(v));
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenBinary = a =>
