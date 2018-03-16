@@ -9,18 +9,19 @@ namespace Language.Analyzer
         public Lexema Location { get; }
         public List<VarInfo> Params { get; }
         public string FullName { get; }
+        public int Offset { get; }
 
-        public VarInfo(SemType type, Lexema location, string scope)
+        public VarInfo(SemType type, Lexema location, string scope, int offset)
         {
             Type = type;
             Location = location;
             Params = new List<VarInfo>();
-            FullName = $"{scope}/{location.Tok}";
+            FullName = $"{scope}/{location.Tok}{{{offset}}}";
         }
 
-        public static VarInfo Of(SemType type, Lexema location, string scope)
+        public static VarInfo Of(SemType type, Lexema location, string scope, int offset = 0)
         {
-            return new VarInfo(type, location, scope);
+            return new VarInfo(type, location, scope, offset);
         }
 
         public void AddParam(VarInfo var)

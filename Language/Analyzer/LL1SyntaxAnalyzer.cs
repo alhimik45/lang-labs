@@ -21,6 +21,7 @@ namespace Language.Analyzer
         private readonly Stack<dynamic> saves = new Stack<dynamic>();
         private readonly Stack<int> addresses = new Stack<int>();
         private readonly Stack<int> jumps = new Stack<int>();
+        private readonly Stack<int> allocs = new Stack<int>();
         private Lexema lastId;
         private SemType ttype;
         private SemType lastType;
@@ -503,7 +504,14 @@ namespace Language.Analyzer
                     $"previous declaration at {prev.Location.Line}:{prev.Location.Symbol}");
             }
 
-            return currentFrame[name] = VarInfo.Of(type, var, Scope);
+            var varInfo = VarInfo.Of(type, var, Scope, allocSize);
+            if (type != SemType.Function)
+            {
+                allocSize += GetSize(type);
+                allocMax = Math.Max(allocSize, allocMax);
+            }
+
+            return currentFrame[name] = varInfo;
         }
 
         private VarInfo TryFindVar(string name)
@@ -554,6 +562,10 @@ namespace Language.Analyzer
             fn.AddParam(v);
         };
 
+        private int allocIndex;
+        private int allocSize;
+        private int allocMax;
+
         private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionProlog = a =>
         {
             var fn = a.TryFindVar(a.fnName);
@@ -561,12 +573,20 @@ namespace Language.Analyzer
             {
                 a.Gen(Operation.Param, param.FullName, GetSize(param.Type));
             }
+
+            a.Gen(Operation.Alloc);
+            a.allocIndex = a.Ir.Count - 1;
+            a.allocSize = 0;
+            a.allocMax = 0;
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionEpilog = a =>
         {
             var fn = a.TryFindVar(a.fnName);
             a.envs.Pop().Dispose();
+            a.Ir[a.allocIndex].Arg1 = a.allocMax;
+            a.Gen(Operation.Free, a.allocMax);
+            a.allocs.Pop();
             a.Gen(Operation.Ret, GetSize(fn.Params.Select(p => p.Type).ToArray()));
         };
 
@@ -582,16 +602,16 @@ namespace Language.Analyzer
             a.Gen(a.scopes.Count <= 2 ? Operation.GlobVar : Operation.LocVar, v.FullName, size);
         };
 
-        private static readonly Action<Ll1SyntaxAnalyzer> Begin = a => { a.NewEnv(); };
+        private static readonly Action<Ll1SyntaxAnalyzer> Begin = a =>
+        {
+            a.NewEnv();
+            a.allocs.Push(a.allocSize);
+        };
 
         private static readonly Action<Ll1SyntaxAnalyzer> End = a =>
         {
-            foreach (var kv in a.environment.Last())
-            {
-                a.Gen(Operation.Destroy, kv.Value.FullName);
-            }
-
             a.envs.Pop().Dispose();
+            a.allocSize = a.allocs.Pop();
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenAssign = a =>
@@ -711,8 +731,10 @@ namespace Language.Analyzer
                 {
                     tr.Index += @base;
                 }
+
                 a.r.Push(result);
             }
+
             foreach (var triad in a.saves.Pop() as List<Triad>)
             {
                 if (triad.Arg1 is TriadResult tr1)

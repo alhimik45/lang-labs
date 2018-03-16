@@ -1,4 +1,5 @@
 void rec(int gg, char g){
+char bb = 6;
     for(int a = 1; a-2; a =  a - 1){
             rec(a+5, 'h');
             {{
@@ -6,8 +7,16 @@ void rec(int gg, char g){
             for(int y = 0; abc+cdcd;bcdm = cdc+1){}
             }}
     }
+    {
+    int y = 0;
+    int yt = 0;
+    } 
+    {
+        char y = 5;
+        char yu = 5;
+    }
+    {
+    char uu = 'g';
+    char uuu = 'g';
+    }
 }
-/*
-s/destroy/calculation
-
-*/
