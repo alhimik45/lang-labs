@@ -2,7 +2,7 @@
 {
     public class TriadResult : IResult
     {
-        public int Index { get; private set; }
+        public int Index { get; set; }
 
         public static TriadResult Of(int index)
         {

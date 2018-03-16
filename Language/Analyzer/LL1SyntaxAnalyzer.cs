@@ -15,13 +15,18 @@ namespace Language.Analyzer
         private string Scope => string.Join('/', scopes);
         private readonly List<Dictionary<string, VarInfo>> environment = new List<Dictionary<string, VarInfo>>();
         private readonly Stack<Env> envs = new Stack<Env>();
-        private readonly List<IResult> r = new List<IResult>();
+        private readonly Stack<IResult> r = new Stack<IResult>();
+        private readonly Stack<Lexema> ops = new Stack<Lexema>();
+        private readonly Stack<List<Triad>> saves = new Stack<List<Triad>>();
+        private readonly Stack<int> addresses = new Stack<int>();
+        private readonly Stack<int> jumps = new Stack<int>();
         private Lexema lastId;
         private SemType ttype;
         private SemType lastType;
         private dynamic lastConst;
 
-        public readonly List<Triad> Ir = new List<Triad>();
+        private List<Triad> realIr;
+        public List<Triad> Ir = new List<Triad>();
 
         private readonly Dictionary<Neterm, Dictionary<LexType, IEnumerable<ITerm>>> table = new
             Dictionary<Neterm, Dictionary<LexType, IEnumerable<ITerm>>>
@@ -33,7 +38,7 @@ namespace Language.Analyzer
                     [LexType.TlongIntType] = new ITerm[] {"data".Of(), LexType.Tdelim.Of(), "program".Of()},
                     [LexType.TvoidType] = new ITerm[]
                     {
-                        LexType.TvoidType.Of(), LexType.Tident.Of(), Begin.Of(), NewFunc.Of(), LexType.Tlparen.Of(),
+                        LexType.TvoidType.Of(), LexType.Tident.Of(), NewFunc.Of(), Begin.Of(), LexType.Tlparen.Of(),
                         "params".Of(),
                         LexType.Trparen.Of(), GenFunctionProlog.Of(), "block".Of(), GenFunctionEpilog.Of(), End.Of(),
                         "program".Of()
@@ -117,7 +122,7 @@ namespace Language.Analyzer
                 ["op".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
                     [LexType.Tident] = new ITerm[] {LexType.Tident.Of(), "M".Of()},
-                    [LexType.Tfor] = new[] {"for".Of()},
+                    [LexType.Tfor] = new ITerm[] {"for".Of()},
                     [LexType.Tinth] = new[] {"P".Of()},
                     [LexType.Tinto] = new[] {"P".Of()},
                     [LexType.Tintd] = new[] {"P".Of()},
@@ -154,21 +159,21 @@ namespace Language.Analyzer
                 },
                 ["N".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tmul] = new ITerm[] {LexType.Tmul.Of(), "A8".Of(), "Q5".Of()},
-                    [LexType.Tmod] = new ITerm[] {LexType.Tmod.Of(), "A8".Of(), "Q5".Of()},
-                    [LexType.Tdiv] = new ITerm[] {LexType.Tdiv.Of(), "A8".Of(), "Q5".Of()},
-                    [LexType.Tlshift] = new ITerm[] {LexType.Tlshift.Of(), "A6".Of(), "Q3".Of()},
-                    [LexType.Trshift] = new ITerm[] {LexType.Trshift.Of(), "A6".Of(), "Q3".Of()},
-                    [LexType.Tplus] = new ITerm[] {LexType.Tplus.Of(), "A7".Of(), "Q4".Of()},
-                    [LexType.Tminus] = new ITerm[] {LexType.Tminus.Of(), "A7".Of(), "Q4".Of()},
-                    [LexType.Txor] = new ITerm[] {LexType.Txor.Of(), "A4".Of(), "Q1".Of()},
-                    [LexType.Tor] = new ITerm[] {LexType.Tor.Of(), "A3".Of(), "Q6".Of()},
-                    [LexType.Tand] = new ITerm[] {LexType.Tand.Of(), "A5".Of(), "Q2".Of()},
-                    [LexType.Teq] = new ITerm[] {LexType.Teq.Of(), "expr".Of()},
+                    [LexType.Tmul] = new ITerm[] {LexType.Tmul.Of(), "A8".Of(), GenBinary.Of(), "Q5".Of()},
+                    [LexType.Tmod] = new ITerm[] {LexType.Tmod.Of(), "A8".Of(), GenBinary.Of(), "Q5".Of()},
+                    [LexType.Tdiv] = new ITerm[] {LexType.Tdiv.Of(), "A8".Of(), GenBinary.Of(), "Q5".Of()},
+                    [LexType.Tlshift] = new ITerm[] {LexType.Tlshift.Of(), "A6".Of(), GenBinary.Of(), "Q3".Of()},
+                    [LexType.Trshift] = new ITerm[] {LexType.Trshift.Of(), "A6".Of(), GenBinary.Of(), "Q3".Of()},
+                    [LexType.Tplus] = new ITerm[] {LexType.Tplus.Of(), "A7".Of(), GenBinary.Of(), "Q4".Of()},
+                    [LexType.Tminus] = new ITerm[] {LexType.Tminus.Of(), "A7".Of(), GenBinary.Of(), "Q4".Of()},
+                    [LexType.Txor] = new ITerm[] {LexType.Txor.Of(), "A4".Of(), GenBinary.Of(), "Q1".Of()},
+                    [LexType.Tor] = new ITerm[] {LexType.Tor.Of(), "A3".Of(), GenBinary.Of(), "Q6".Of()},
+                    [LexType.Tand] = new ITerm[] {LexType.Tand.Of(), "A5".Of(), GenBinary.Of(), "Q2".Of()},
+                    [LexType.Teq] = new ITerm[] {LexType.Teq.Of(), "expr".Of(), GenAssign.Of()},
                 },
                 ["R".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tident] = new ITerm[] {LexType.Tident.Of(), "N".Of()},
+                    [LexType.Tident] = new ITerm[] {LexType.Tident.Of(), IdentToR.Of(), "N".Of()},
                     [LexType.Tinth] = new[] {"expr".Of()},
                     [LexType.Tinto] = new[] {"expr".Of()},
                     [LexType.Tintd] = new[] {"expr".Of()},
@@ -180,8 +185,11 @@ namespace Language.Analyzer
                 {
                     [LexType.Tfor] = new ITerm[]
                     {
-                        LexType.Tfor.Of(), LexType.Tlparen.Of(), "data".Of(), LexType.Tdelim.Of(), "R".Of(),
-                        LexType.Tdelim.Of(), "R".Of(), LexType.Trparen.Of(), "op".Of()
+                        LexType.Tfor.Of(), Begin.Of(), LexType.Tlparen.Of(), "data".Of(), LexType.Tdelim.Of(),
+                        StartSave.Of(), "R".Of(), EndSave.Of(),
+                        LexType.Tdelim.Of(), StartSave.Of(), "R".Of(), EndSave.Of(), LexType.Trparen.Of(),
+                        SaveAddress.Of(), PasteSave.Of(), GenJump.Of(), "op".Of(), PasteSave.Of(), JumpTo.Of(),
+                        EndFor.Of(), End.Of()
                     },
                 },
                 ["call".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
@@ -215,7 +223,7 @@ namespace Language.Analyzer
                 },
                 ["Q6".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tor] = new ITerm[] {LexType.Tor.Of(), "A3".Of(), "Q6".Of()},
+                    [LexType.Tor] = new ITerm[] {LexType.Tor.Of(), "A3".Of(), GenBinary.Of(), "Q6".Of()},
                     [LexType.Trparen] = new ITerm[] { },
                     [LexType.Tdelim] = new ITerm[] { },
                     [LexType.Tcomma] = new ITerm[] { },
@@ -232,7 +240,7 @@ namespace Language.Analyzer
                 },
                 ["Q1".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Txor] = new ITerm[] {LexType.Txor.Of(), "A4".Of(), "Q1".Of()},
+                    [LexType.Txor] = new ITerm[] {LexType.Txor.Of(), "A4".Of(), GenBinary.Of(), "Q1".Of()},
                     [LexType.Trparen] = new ITerm[] { },
                     [LexType.Tdelim] = new ITerm[] { },
                     [LexType.Tcomma] = new ITerm[] { },
@@ -285,7 +293,7 @@ namespace Language.Analyzer
                     [LexType.Tintd] = new[] {"A9".Of()},
                     [LexType.Tchar] = new[] {"A9".Of()},
                     [LexType.Tlparen] = new[] {"A9".Of()},
-                    [LexType.Tnot] = new ITerm[] {LexType.Tnot.Of(), "A8".Of()},
+                    [LexType.Tnot] = new ITerm[] {LexType.Tnot.Of(), "A8".Of(), GenNot.Of()},
                 },
                 ["A9".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -305,7 +313,7 @@ namespace Language.Analyzer
                 },
                 ["Q2".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tand] = new ITerm[] {LexType.Tand.Of(), "A5".Of(), "Q2".Of()},
+                    [LexType.Tand] = new ITerm[] {LexType.Tand.Of(), "A5".Of(), GenBinary.Of(), "Q2".Of()},
                     [LexType.Txor] = new ITerm[] { },
                     [LexType.Trparen] = new ITerm[] { },
                     [LexType.Tdelim] = new ITerm[] { },
@@ -350,19 +358,19 @@ namespace Language.Analyzer
                 },
                 ["L2".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tlshift] = new ITerm[] {LexType.Tlshift.Of(), "A6".Of()},
-                    [LexType.Trshift] = new ITerm[] {LexType.Trshift.Of(), "A6".Of()},
+                    [LexType.Tlshift] = new ITerm[] {LexType.Tlshift.Of(), "A6".Of(), GenBinary.Of()},
+                    [LexType.Trshift] = new ITerm[] {LexType.Trshift.Of(), "A6".Of(), GenBinary.Of()},
                 },
                 ["L3".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tplus] = new ITerm[] {LexType.Tplus.Of(), "A7".Of()},
-                    [LexType.Tminus] = new ITerm[] {LexType.Tminus.Of(), "A7".Of()},
+                    [LexType.Tplus] = new ITerm[] {LexType.Tplus.Of(), "A7".Of(), GenBinary.Of()},
+                    [LexType.Tminus] = new ITerm[] {LexType.Tminus.Of(), "A7".Of(), GenBinary.Of()},
                 },
                 ["L4".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tmul] = new ITerm[] {LexType.Tmul.Of(), "A8".Of()},
-                    [LexType.Tmod] = new ITerm[] {LexType.Tmod.Of(), "A8".Of()},
-                    [LexType.Tdiv] = new ITerm[] {LexType.Tdiv.Of(), "A8".Of()},
+                    [LexType.Tmul] = new ITerm[] {LexType.Tmul.Of(), "A8".Of(), GenBinary.Of()},
+                    [LexType.Tmod] = new ITerm[] {LexType.Tmod.Of(), "A8".Of(), GenBinary.Of()},
+                    [LexType.Tdiv] = new ITerm[] {LexType.Tdiv.Of(), "A8".Of(), GenBinary.Of()},
                 },
             };
 
@@ -420,6 +428,19 @@ namespace Language.Analyzer
                             break;
                         case LexType.Tchar:
                             lastConst = ll.Tok[1];
+                            break;
+                        case LexType.Tand:
+                        case LexType.Tor:
+                        case LexType.Tdiv:
+                        case LexType.Tmod:
+                        case LexType.Tmul:
+                        case LexType.Tplus:
+                        case LexType.Tminus:
+                        case LexType.Tlshift:
+                        case LexType.Trshift:
+                        case LexType.Txor:
+                        case LexType.Tnot:
+                            ops.Push(ll);
                             break;
                     }
 
@@ -550,20 +571,138 @@ namespace Language.Analyzer
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> Begin = a => { a.NewEnv(); };
-        private static readonly Action<Ll1SyntaxAnalyzer> End = a => { a.envs.Pop().Dispose(); };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> End = a =>
+        {
+            foreach (var kv in a.environment.Last())
+            {
+                a.Gen(Operation.Destroy, kv.Value.FullName);
+            }
+
+            a.envs.Pop().Dispose();
+        };
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenAssign = a =>
         {
-            a.Gen(Operation.Assign, a.currVar.FullName, a.r.Last());
+            a.Gen(Operation.Assign, a.currVar.FullName, a.r.Pop());
         };
 
-        private static readonly Action<Ll1SyntaxAnalyzer> ConstToR = a => { a.r.Add(ConstResult.Of(a.lastConst)); };
+        private static readonly Action<Ll1SyntaxAnalyzer> ConstToR = a => { a.r.Push(ConstResult.Of(a.lastConst)); };
 
         private static readonly Action<Ll1SyntaxAnalyzer> IdentToR = a =>
         {
             var v = a.FindVar(a.lastId);
             a.Gen(Operation.Load, v.FullName);
-            a.r.Add(TriadResult.Of(a.Ir.Count - 1));
+            a.r.Push(TriadResult.Of(a.Ir.Count - 1));
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> GenBinary = a =>
+        {
+            var op = a.ops.Pop();
+            var o = Operation.Undefined;
+            switch (op.Type)
+            {
+                case LexType.Tand:
+                    o = Operation.And;
+                    break;
+                case LexType.Tor:
+                    o = Operation.Or;
+                    break;
+                case LexType.Tdiv:
+                    o = Operation.Div;
+                    break;
+                case LexType.Tmod:
+                    o = Operation.Mod;
+                    break;
+                case LexType.Tmul:
+                    o = Operation.Mul;
+                    break;
+                case LexType.Tplus:
+                    o = Operation.Add;
+                    break;
+                case LexType.Tminus:
+                    o = Operation.Sub;
+                    break;
+                case LexType.Tlshift:
+                    o = Operation.Lshift;
+                    break;
+                case LexType.Trshift:
+                    o = Operation.Rshift;
+                    break;
+                case LexType.Txor:
+                    o = Operation.Xor;
+                    break;
+                default:
+                    Console.WriteLine(op);
+                    break;
+            }
+
+            var o2 = a.r.Pop();
+            var o1 = a.r.Pop();
+            a.Gen(o, o1, o2);
+            a.r.Push(TriadResult.Of(a.Ir.Count - 1));
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> GenNot = a =>
+        {
+            a.ops.Pop();
+            a.Gen(Operation.Not, a.r.Pop());
+            a.r.Push(TriadResult.Of(a.Ir.Count - 1));
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> StartSave = a =>
+        {
+            a.realIr = a.Ir;
+            a.Ir = new List<Triad>();
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> EndSave = a =>
+        {
+            a.saves.Push(a.Ir);
+            a.Ir = a.realIr;
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> SaveAddress = a =>
+        {
+            var a1 = a.saves.Pop();
+            var a2 = a.saves.Pop();
+            a.saves.Push(a1);
+            a.saves.Push(a2);
+            a.addresses.Push(a.Ir.Count);
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> PasteSave = a =>
+        {
+            var @base = a.Ir.Count;
+            foreach (var triad in a.saves.Pop())
+            {
+                if (triad.Arg1 is TriadResult tr1)
+                {
+                    tr1.Index += @base;
+                }
+
+                if (triad.Arg2 is TriadResult tr2)
+                {
+                    tr2.Index += @base;
+                }
+
+                a.Ir.Add(triad);
+            }
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> GenJump = a =>
+        {
+            a.Gen(Operation.Jz, TriadResult.Of(a.Ir.Count - 1), null);
+            a.jumps.Push(a.Ir.Count - 1);
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> JumpTo = a => { a.Gen(Operation.Jmp, a.addresses.Pop()); };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> EndFor = a =>
+        {
+            var ja = a.jumps.Pop();
+            a.Gen(Operation.Nop);
+            a.Ir[ja].Arg2 = a.Ir.Count - 1;
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> aa = a => { };
