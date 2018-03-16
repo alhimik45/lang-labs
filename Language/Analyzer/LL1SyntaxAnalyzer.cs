@@ -159,21 +159,30 @@ namespace Language.Analyzer
                 },
                 ["N".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tmul] = new ITerm[] {LexType.Tmul.Of(), "A8".Of(), GenBinary.Of(), "Q5".Of()},
-                    [LexType.Tmod] = new ITerm[] {LexType.Tmod.Of(), "A8".Of(), GenBinary.Of(), "Q5".Of()},
-                    [LexType.Tdiv] = new ITerm[] {LexType.Tdiv.Of(), "A8".Of(), GenBinary.Of(), "Q5".Of()},
-                    [LexType.Tlshift] = new ITerm[] {LexType.Tlshift.Of(), "A6".Of(), GenBinary.Of(), "Q3".Of()},
-                    [LexType.Trshift] = new ITerm[] {LexType.Trshift.Of(), "A6".Of(), GenBinary.Of(), "Q3".Of()},
-                    [LexType.Tplus] = new ITerm[] {LexType.Tplus.Of(), "A7".Of(), GenBinary.Of(), "Q4".Of()},
-                    [LexType.Tminus] = new ITerm[] {LexType.Tminus.Of(), "A7".Of(), GenBinary.Of(), "Q4".Of()},
-                    [LexType.Txor] = new ITerm[] {LexType.Txor.Of(), "A4".Of(), GenBinary.Of(), "Q1".Of()},
-                    [LexType.Tor] = new ITerm[] {LexType.Tor.Of(), "A3".Of(), GenBinary.Of(), "Q6".Of()},
-                    [LexType.Tand] = new ITerm[] {LexType.Tand.Of(), "A5".Of(), GenBinary.Of(), "Q2".Of()},
+                    [LexType.Tmul] = new ITerm[]
+                        {IdentToR.Of(), LexType.Tmul.Of(), "A8".Of(), GenBinary.Of(), "Q5".Of()},
+                    [LexType.Tmod] = new ITerm[]
+                        {IdentToR.Of(), LexType.Tmod.Of(), "A8".Of(), GenBinary.Of(), "Q5".Of()},
+                    [LexType.Tdiv] = new ITerm[]
+                        {IdentToR.Of(), LexType.Tdiv.Of(), "A8".Of(), GenBinary.Of(), "Q5".Of()},
+                    [LexType.Tlshift] = new ITerm[]
+                        {IdentToR.Of(), LexType.Tlshift.Of(), "A6".Of(), GenBinary.Of(), "Q3".Of()},
+                    [LexType.Trshift] = new ITerm[]
+                        {IdentToR.Of(), LexType.Trshift.Of(), "A6".Of(), GenBinary.Of(), "Q3".Of()},
+                    [LexType.Tplus] = new ITerm[]
+                        {IdentToR.Of(), LexType.Tplus.Of(), "A7".Of(), GenBinary.Of(), "Q4".Of()},
+                    [LexType.Tminus] = new ITerm[]
+                        {IdentToR.Of(), LexType.Tminus.Of(), "A7".Of(), GenBinary.Of(), "Q4".Of()},
+                    [LexType.Txor] = new ITerm[]
+                        {IdentToR.Of(), LexType.Txor.Of(), "A4".Of(), GenBinary.Of(), "Q1".Of()},
+                    [LexType.Tor] = new ITerm[] {IdentToR.Of(), LexType.Tor.Of(), "A3".Of(), GenBinary.Of(), "Q6".Of()},
+                    [LexType.Tand] = new ITerm[]
+                        {IdentToR.Of(), LexType.Tand.Of(), "A5".Of(), GenBinary.Of(), "Q2".Of()},
                     [LexType.Teq] = new ITerm[] {LexType.Teq.Of(), "expr".Of(), GenAssign.Of()},
                 },
                 ["R".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tident] = new ITerm[] {LexType.Tident.Of(), IdentToR.Of(), "N".Of()},
+                    [LexType.Tident] = new ITerm[] {LexType.Tident.Of(), "N".Of()},
                     [LexType.Tinth] = new[] {"expr".Of()},
                     [LexType.Tinto] = new[] {"expr".Of()},
                     [LexType.Tintd] = new[] {"expr".Of()},
