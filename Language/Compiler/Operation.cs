@@ -24,6 +24,9 @@
         Jmp,
         Nop,
         Destroy,
-        
+        Call,
+        Param,
+        Push,
+        Pop,
     }
 }

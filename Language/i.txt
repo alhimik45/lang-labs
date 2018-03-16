@@ -1,5 +1,5 @@
-void kek(){
+void kek(int gg, char g){
     for(int a = 1; a-2; a =  a - 1){
-            kek();
+            kek(a+5, 'h');
     }
 }

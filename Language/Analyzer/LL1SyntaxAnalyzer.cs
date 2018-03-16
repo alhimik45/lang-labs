@@ -40,7 +40,7 @@ namespace Language.Analyzer
                     {
                         LexType.TvoidType.Of(), LexType.Tident.Of(), NewFunc.Of(), Begin.Of(), LexType.Tlparen.Of(),
                         "params".Of(),
-                        LexType.Trparen.Of(), GenFunctionProlog.Of(), "block".Of(), GenFunctionEpilog.Of(), End.Of(),
+                        LexType.Trparen.Of(), GenFunctionProlog.Of(), "block".Of(), GenFunctionEpilog.Of(),
                         "program".Of()
                     },
                     [LexType.Trparen] = new ITerm[] { },
@@ -144,7 +144,7 @@ namespace Language.Analyzer
                 },
                 ["M".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tlparen] = new[] {"call".Of()},
+                    [LexType.Tlparen] = new ITerm[] {FunName.Of(), "call".Of()},
                     [LexType.Tmul] = new[] {"N".Of()},
                     [LexType.Tmod] = new[] {"N".Of()},
                     [LexType.Tdiv] = new[] {"N".Of()},
@@ -194,22 +194,23 @@ namespace Language.Analyzer
                 },
                 ["call".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tlparen] = new ITerm[] {LexType.Tlparen.Of(), "cparams".Of(), LexType.Trparen.Of()},
+                    [LexType.Tlparen] = new ITerm[] {LexType.Tlparen.Of(), "cparams".Of(), LexType.Trparen.Of(), GenCall.Of()},
                 },
                 ["cparams".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tident] = new[] {"expr".Of(), "X".Of()},
-                    [LexType.Tinth] = new[] {"expr".Of(), "X".Of()},
-                    [LexType.Tinto] = new[] {"expr".Of(), "X".Of()},
-                    [LexType.Tintd] = new[] {"expr".Of(), "X".Of()},
-                    [LexType.Tchar] = new[] {"expr".Of(), "X".Of()},
-                    [LexType.Tlparen] = new[] {"expr".Of(), "X".Of()},
-                    [LexType.Tnot] = new[] {"expr".Of(), "X".Of()},
+                    [LexType.Tident] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
+                    [LexType.Tinth] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
+                    [LexType.Tinto] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
+                    [LexType.Tintd] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
+                    [LexType.Tchar] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
+                    [LexType.Tlparen] = new ITerm[] {"expr".Of(),PushParam.Of(),  "X".Of()},
+                    [LexType.Tnot] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
                     [LexType.Trparen] = new ITerm[] { },
                 },
                 ["X".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
                     [LexType.Tcomma] = new ITerm[] {LexType.Tcomma.Of(), "cparams".Of()},
+                    [LexType.Trparen] = new ITerm[] { },
                 },
                 ["expr".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -527,11 +528,6 @@ namespace Language.Analyzer
             }[t]).Sum();
         }
 
-        private string VarName(Lexema l)
-        {
-            return $"{Scope}/{l.Tok}";
-        }
-
         private string fnName;
 
         private static readonly Action<Ll1SyntaxAnalyzer> NewFunc = a =>
@@ -552,11 +548,20 @@ namespace Language.Analyzer
             var fn = a.TryFindVar(a.fnName);
             foreach (var param in fn.Params)
             {
-                a.Gen(Operation.LocVar, param.FullName, GetSize(param.Type));
+                a.Gen(Operation.Param, param.FullName, GetSize(param.Type));
             }
         };
 
-        private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionEpilog = a => { a.Gen(Operation.Ret); };
+        private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionEpilog = a =>
+        {
+            var fn = a.TryFindVar(a.fnName);
+            foreach (var param in fn.Params)
+            {
+                a.Gen(Operation.Pop, param.FullName);
+            }
+            a.envs.Pop().Dispose();
+            a.Gen(Operation.Ret);
+        };
 
         private static readonly Action<Ll1SyntaxAnalyzer> SaveType = a => { a.lastType = a.ttype; };
 
@@ -632,9 +637,6 @@ namespace Language.Analyzer
                 case LexType.Txor:
                     o = Operation.Xor;
                     break;
-                default:
-                    Console.WriteLine(op);
-                    break;
             }
 
             var o2 = a.r.Pop();
@@ -705,6 +707,17 @@ namespace Language.Analyzer
             a.Ir[ja].Arg2 = a.Ir.Count - 1;
         };
 
+        private static readonly Action<Ll1SyntaxAnalyzer> GenCall = a =>
+        {
+            a.Gen(Operation.Call, a.FindVar(a.lastFn).FullName);
+        };
+
+        private Lexema lastFn;
+        private static readonly Action<Ll1SyntaxAnalyzer> FunName = a => { a.lastFn = a.lastId; };
+        private static readonly Action<Ll1SyntaxAnalyzer> PushParam = a =>
+        {
+            a.Gen(Operation.Push, a.r.Pop());
+        };
         private static readonly Action<Ll1SyntaxAnalyzer> aa = a => { };
     }
 
