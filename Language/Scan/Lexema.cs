@@ -9,6 +9,7 @@ namespace Language.Scan
         public string TTok = "";
         public int Line { get; set; }
         public int Symbol { get; set; }
+        public int IntValue { get; set; }
 
         public override string ToString()
         {

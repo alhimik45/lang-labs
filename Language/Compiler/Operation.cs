@@ -5,6 +5,7 @@
         Proc,
         GlobVar,
         LocVar,
-        Ret
+        Ret,
+        Assign,
     }
 }

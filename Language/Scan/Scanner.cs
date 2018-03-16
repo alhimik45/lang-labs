@@ -376,21 +376,22 @@ namespace Language.Scan
 
         private Lexema EndLexema()
         {
+            var v = 0;
             try
             {
                 if (curr.Type == LexType.Tintd)
                 {
                     // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                    Int32.Parse(curr.Tok);
+                    v = int.Parse(curr.Tok);
                 }
                 else if (curr.Type == LexType.Tinth && curr.Tok.Substring(2).Length > 0)
                 {
-                    Int32.Parse(curr.Tok.Substring(2), NumberStyles.HexNumber);
+                    v = int.Parse(curr.Tok.Substring(2), NumberStyles.HexNumber);
                 }
                 else if (curr.Type == LexType.Tinto)
                 {
                     // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                    Convert.ToInt64(curr.Tok, 8);
+                    v = Convert.ToInt32(curr.Tok, 8);
                 }
             }
             catch (OverflowException)
@@ -398,8 +399,10 @@ namespace Language.Scan
                 SetLexType(LexType.Terr);
             }
             var t = curr;
+            
             curr = null;
             t.Line = line;
+            t.IntValue = v;
             t.Symbol = Symbol;
             return t;
         }
