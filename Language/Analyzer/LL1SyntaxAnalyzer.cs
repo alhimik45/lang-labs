@@ -15,9 +15,10 @@ namespace Language.Analyzer
         private string Scope => string.Join('/', scopes);
         private readonly List<Dictionary<string, VarInfo>> environment = new List<Dictionary<string, VarInfo>>();
         private readonly Stack<Env> envs = new Stack<Env>();
-        private readonly Stack<IResult> r = new Stack<IResult>();
+        private Stack<IResult> realR;
+        private Stack<IResult> r = new Stack<IResult>();
         private readonly Stack<Lexema> ops = new Stack<Lexema>();
-        private readonly Stack<List<Triad>> saves = new Stack<List<Triad>>();
+        private readonly Stack<dynamic> saves = new Stack<dynamic>();
         private readonly Stack<int> addresses = new Stack<int>();
         private readonly Stack<int> jumps = new Stack<int>();
         private Lexema lastId;
@@ -680,28 +681,44 @@ namespace Language.Analyzer
         private static readonly Action<Ll1SyntaxAnalyzer> StartSave = a =>
         {
             a.realIr = a.Ir;
+            a.realR = a.r;
+            a.r = new Stack<IResult>();
             a.Ir = new List<Triad>();
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> EndSave = a =>
         {
             a.saves.Push(a.Ir);
+            a.saves.Push(a.r);
             a.Ir = a.realIr;
+            a.r = a.realR;
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> SaveAddress = a =>
         {
-            var a1 = a.saves.Pop();
-            var a2 = a.saves.Pop();
-            a.saves.Push(a1);
-            a.saves.Push(a2);
+            var a11 = a.saves.Pop();
+            var a12 = a.saves.Pop();
+            var a21 = a.saves.Pop();
+            var a22 = a.saves.Pop();
+            a.saves.Push(a12);
+            a.saves.Push(a11);
+            a.saves.Push(a22);
+            a.saves.Push(a21);
             a.addresses.Push(a.Ir.Count);
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> PasteSave = a =>
         {
             var @base = a.Ir.Count;
-            foreach (var triad in a.saves.Pop())
+            foreach (var result in a.saves.Pop() as Stack<IResult>)
+            {
+                if (result is TriadResult tr)
+                {
+                    tr.Index += @base;
+                }
+                a.r.Push(result);
+            }
+            foreach (var triad in a.saves.Pop() as List<Triad>)
             {
                 if (triad.Arg1 is TriadResult tr1)
                 {
@@ -747,7 +764,6 @@ namespace Language.Analyzer
         private Lexema lastFn;
         private static readonly Action<Ll1SyntaxAnalyzer> FunName = a => { a.lastFn = a.lastId; };
         private static readonly Action<Ll1SyntaxAnalyzer> PushParam = a => { a.Gen(Operation.Push, a.r.Pop()); };
-        private static readonly Action<Ll1SyntaxAnalyzer> aa = a => { };
     }
 
     public interface ITerm
