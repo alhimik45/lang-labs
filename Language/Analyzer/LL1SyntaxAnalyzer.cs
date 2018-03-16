@@ -14,6 +14,7 @@ namespace Language.Analyzer
         private readonly List<string> scopes = new List<string> {"global"};
         private string Scope => string.Join('/', scopes);
         private readonly List<Dictionary<string, VarInfo>> environment = new List<Dictionary<string, VarInfo>>();
+        private readonly Stack<Env> envs = new Stack<Env>();
         private Lexema lastId;
         private SemType ttype;
         private SemType lastType;
@@ -61,7 +62,7 @@ namespace Language.Analyzer
                 },
                 ["def".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tident] = new ITerm[] {LexType.Tident.Of(), "C".Of()},
+                    [LexType.Tident] = new ITerm[] {LexType.Tident.Of(), NewVar.Of(), "C".Of()},
                 },
                 ["C".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -90,7 +91,8 @@ namespace Language.Analyzer
                 },
                 ["block".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tlbracket] = new ITerm[] {LexType.Tlbracket.Of(), "ops".Of(), LexType.Trbracket.Of()},
+                    [LexType.Tlbracket] = new ITerm[]
+                        {LexType.Tlbracket.Of(), Begin.Of(), "ops".Of(), End.Of(), LexType.Trbracket.Of()},
                 },
                 ["ops".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -434,16 +436,16 @@ namespace Language.Analyzer
             }
         }
 
-        private void Gen(Operation operation, string arg1 = null, string arg2 = null)
+        private void Gen(Operation operation, dynamic arg1 = null, dynamic arg2 = null)
         {
             Ir.Add(Triad.Of(operation, arg1, arg2));
         }
 
-        private Env NewEnv()
+        private void NewEnv()
         {
             scopes.Add((++counter).ToString());
             environment.Add(new Dictionary<string, VarInfo>());
-            return new Env(environment, scopes);
+            envs.Push(new Env(environment, scopes));
         }
 
         private VarInfo AddVar(Lexema var, SemType type)
@@ -483,6 +485,16 @@ namespace Language.Analyzer
             return res;
         }
 
+        private static int GetSize(params SemType[] types)
+        {
+            return types.Select(t => new Dictionary<SemType, int>
+            {
+                [SemType.Char] = 1,
+                [SemType.Int] = 4,
+                [SemType.LongLongInt] = 8
+            }[t]).Sum();
+        }
+
         private string fnName;
 
         private static readonly Action<Ll1SyntaxAnalyzer> NewFunc = a =>
@@ -501,21 +513,23 @@ namespace Language.Analyzer
         private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionProlog = a =>
         {
             var fn = a.TryFindVar(a.fnName);
-            var totalSize = fn.Params.Select(t => new Dictionary<SemType, int>
-            {
-                [SemType.Char] = 1,
-                [SemType.Int] = 4,
-                [SemType.LongLongInt] = 8
-            }[t]).Sum();
-            a.Gen(Operation.Reserve, totalSize.ToString());
+            var totalSize = GetSize(fn.Params.ToArray());
+            a.Gen(Operation.Reserve, totalSize);
         };
 
-        private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionEpilog = a =>
-        {
-            a.Gen(Operation.Ret);
-        };
+        private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionEpilog = a => { a.Gen(Operation.Ret); };
 
         private static readonly Action<Ll1SyntaxAnalyzer> SaveType = a => { a.lastType = a.ttype; };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> NewVar = a =>
+        {
+            a.AddVar(a.lastId, a.lastType);
+            var size = GetSize(a.lastType);
+            a.Gen(Operation.Reserve, size);
+        };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> Begin = a => { a.NewEnv(); };
+        private static readonly Action<Ll1SyntaxAnalyzer> End = a => { a.envs.Pop().Dispose(); };
         private static readonly Action<Ll1SyntaxAnalyzer> aa = a => { };
     }
 
