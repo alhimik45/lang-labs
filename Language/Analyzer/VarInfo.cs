@@ -7,23 +7,25 @@ namespace Language.Analyzer
     {
         public SemType Type { get; }
         public Lexema Location { get; }
-        public List<SemType> Params { get; }
+        public List<VarInfo> Params { get; }
+        public string FullName { get; }
 
-        public VarInfo(SemType type, Lexema location)
+        public VarInfo(SemType type, Lexema location, string scope)
         {
             Type = type;
             Location = location;
-            Params = new List<SemType>();
+            Params = new List<VarInfo>();
+            FullName = $"{scope}/{location.Tok}";
         }
 
-        public static VarInfo Of(SemType type, Lexema location)
+        public static VarInfo Of(SemType type, Lexema location, string scope)
         {
-            return new VarInfo(type, location);
+            return new VarInfo(type, location, scope);
         }
 
-        public void AddParam(SemType type)
+        public void AddParam(VarInfo var)
         {
-            Params.Add(type);
+            Params.Add(var);
         }
     }
 }

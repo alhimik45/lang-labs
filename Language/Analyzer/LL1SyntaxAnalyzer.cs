@@ -31,8 +31,8 @@ namespace Language.Analyzer
                     [LexType.TlongIntType] = new ITerm[] {"data".Of(), LexType.Tdelim.Of(), "program".Of()},
                     [LexType.TvoidType] = new ITerm[]
                     {
-                        LexType.TvoidType.Of(), LexType.Tident.Of(), NewFunc.Of(), LexType.Tlparen.Of(), "params".Of(),
-                        LexType.Trparen.Of(), GenFunctionProlog.Of(), "block".Of(), GenFunctionEpilog.Of(),
+                        LexType.TvoidType.Of(), LexType.Tident.Of(), Begin.Of(), NewFunc.Of(), LexType.Tlparen.Of(), "params".Of(),
+                        LexType.Trparen.Of(), GenFunctionProlog.Of(), "block".Of(), GenFunctionEpilog.Of(), End.Of(),
                         "program".Of()
                     },
                     [LexType.Trparen] = new ITerm[] { },
@@ -459,7 +459,7 @@ namespace Language.Analyzer
                     $"previous declaration at {prev.Location.Line}:{prev.Location.Symbol}");
             }
 
-            return currentFrame[name] = VarInfo.Of(type, var);
+            return currentFrame[name] = VarInfo.Of(type, var, Scope);
         }
 
         private VarInfo TryFindVar(string name)
@@ -495,6 +495,11 @@ namespace Language.Analyzer
             }[t]).Sum();
         }
 
+        private string VarName(Lexema l)
+        {
+            return $"{Scope}/{l.Tok}";
+        }
+
         private string fnName;
 
         private static readonly Action<Ll1SyntaxAnalyzer> NewFunc = a =>
@@ -505,16 +510,18 @@ namespace Language.Analyzer
 
         private static readonly Action<Ll1SyntaxAnalyzer> AddParam = a =>
         {
-            a.AddVar(a.lastId, a.lastType);
+            var v = a.AddVar(a.lastId, a.lastType);
             var fn = a.TryFindVar(a.fnName);
-            fn.AddParam(a.lastType);
+            fn.AddParam(v);
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionProlog = a =>
         {
             var fn = a.TryFindVar(a.fnName);
-            var totalSize = GetSize(fn.Params.ToArray());
-            a.Gen(Operation.Reserve, totalSize);
+            foreach (var param in fn.Params)
+            {
+                a.Gen(Operation.LocVar, param.FullName, GetSize(param.Type));
+            }
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionEpilog = a => { a.Gen(Operation.Ret); };
@@ -523,9 +530,9 @@ namespace Language.Analyzer
 
         private static readonly Action<Ll1SyntaxAnalyzer> NewVar = a =>
         {
-            a.AddVar(a.lastId, a.lastType);
+            var v = a.AddVar(a.lastId, a.lastType);
             var size = GetSize(a.lastType);
-            a.Gen(Operation.Reserve, size);
+            a.Gen(a.scopes.Count <= 2 ?  Operation.GlobVar : Operation.LocVar, v.FullName, size);
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> Begin = a => { a.NewEnv(); };

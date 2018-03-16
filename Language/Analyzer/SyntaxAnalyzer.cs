@@ -100,7 +100,7 @@ namespace Language.Analyzer
                     {
                         throw new SemanticException("Extra function parameter", ll);
                     }
-                    Mismatch(fn.Params[count - 1], eType, ll);
+                    Mismatch(fn.Params[count - 1].Type, eType, ll);
                     Maybe(() => Many(() =>
                     {
                         L(LexType.Tcomma);
@@ -113,7 +113,7 @@ namespace Language.Analyzer
                             {
                                 throw new SemanticException("Extra function parameter", ll);
                             }
-                            Mismatch(fn.Params[count - 1], eeType, lll);
+                            Mismatch(fn.Params[count - 1].Type, eeType, lll);
                         });
                     }));
                 }, () => count = 0);
@@ -164,8 +164,8 @@ namespace Language.Analyzer
         {
             var type = Type();
             var id = L(LexType.Tident);
-            AddVar(id, type);
-            fn.AddParam(type);
+            var v = AddVar(id, type);
+            fn.AddParam(v);
         }
 
         private void Data()
@@ -447,7 +447,7 @@ namespace Language.Analyzer
                 throw new SemanticException($"Cannot redefine variable: `{name}`", var,
                     $"previous declaration at {prev.Location.Line}:{prev.Location.Symbol}");
             }
-            return currentFrame[name] = VarInfo.Of(type, var);
+            return currentFrame[name] = VarInfo.Of(type, var, "");
         }
 
         private VarInfo TryFindVar(string name)

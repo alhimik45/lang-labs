@@ -3,7 +3,8 @@
     public enum Operation
     {
         Proc,
-        Reserve,
+        GlobVar,
+        LocVar,
         Ret
     }
 }
