@@ -7,5 +7,6 @@
         LocVar,
         Ret,
         Assign,
+        Load,
     }
 }

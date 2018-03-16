@@ -1,5 +1,6 @@
 int g = 2;
 char t = 'j';
+char y = t;
 long long int j=9+9,k=5&6;
 
 void kek(){
@@ -9,11 +10,11 @@ void kek(){
 void main(char args){
     char f = 5 + 0x7649f - 0337 ^ 3 * ~1 >> 7;
     long long int j,k=6  ;
-    for(long long int fhghghgghghh654__54654 = 0xdeadbeed; a=5+7; fhghghgghghh654__54654 = 67 / fhg){
+    for(long long int fhg = 0xdeadbeed; a=5+7; fhg = 67 / fhg){
     for(long long int b = 0xdeadbeef; c=5+7; b = 67 / fhg)
         kek();;;;
         long long int j,k=6  ;
-        for(long long int c = 0xa0aa00; b=3*8>>5; fhghghgghghh654__54654 = 67 / fhg){
+        for(long long int c = 0xa0aa00; b=3*8>>5; fhg = 67 / fhg){
         long long int j,k=6, m = 12*89/56<<6  ;
         dgf();
         

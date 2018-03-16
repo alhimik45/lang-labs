@@ -11,7 +11,7 @@ namespace Language.Analyzer
         private readonly Scanner sc;
         private readonly List<ITerm> magaz = new List<ITerm>();
         private int counter;
-        private readonly List<string> scopes = new List<string> {"global"};
+        private readonly List<string> scopes = new List<string> {""};
         private string Scope => string.Join('/', scopes);
         private readonly List<Dictionary<string, VarInfo>> environment = new List<Dictionary<string, VarInfo>>();
         private readonly Stack<Env> envs = new Stack<Env>();
@@ -289,7 +289,7 @@ namespace Language.Analyzer
                 },
                 ["A9".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tident] = new[] {LexType.Tident.Of()},
+                    [LexType.Tident] = new ITerm[] {LexType.Tident.Of(), IdentToR.Of()},
                     [LexType.Tinth] = new[] {"const".Of()},
                     [LexType.Tinto] = new[] {"const".Of()},
                     [LexType.Tintd] = new[] {"const".Of()},
@@ -298,10 +298,10 @@ namespace Language.Analyzer
                 },
                 ["const".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tinth] = new ITerm[] {LexType.Tinth.Of(), ToR.Of()},
-                    [LexType.Tinto] = new ITerm[] {LexType.Tinto.Of(), ToR.Of()},
-                    [LexType.Tintd] = new ITerm[] {LexType.Tintd.Of(), ToR.Of()},
-                    [LexType.Tchar] = new ITerm[] {LexType.Tchar.Of(), ToR.Of()},
+                    [LexType.Tinth] = new ITerm[] {LexType.Tinth.Of(), ConstToR.Of()},
+                    [LexType.Tinto] = new ITerm[] {LexType.Tinto.Of(), ConstToR.Of()},
+                    [LexType.Tintd] = new ITerm[] {LexType.Tintd.Of(), ConstToR.Of()},
+                    [LexType.Tchar] = new ITerm[] {LexType.Tchar.Of(), ConstToR.Of()},
                 },
                 ["Q2".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -540,6 +540,7 @@ namespace Language.Analyzer
         private static readonly Action<Ll1SyntaxAnalyzer> SaveType = a => { a.lastType = a.ttype; };
 
         private VarInfo currVar;
+
         private static readonly Action<Ll1SyntaxAnalyzer> NewVar = a =>
         {
             var v = a.AddVar(a.lastId, a.lastType);
@@ -550,14 +551,21 @@ namespace Language.Analyzer
 
         private static readonly Action<Ll1SyntaxAnalyzer> Begin = a => { a.NewEnv(); };
         private static readonly Action<Ll1SyntaxAnalyzer> End = a => { a.envs.Pop().Dispose(); };
+
         private static readonly Action<Ll1SyntaxAnalyzer> GenAssign = a =>
         {
             a.Gen(Operation.Assign, a.currVar.FullName, a.r.Last());
         };
-        private static readonly Action<Ll1SyntaxAnalyzer> ToR = a =>
+
+        private static readonly Action<Ll1SyntaxAnalyzer> ConstToR = a => { a.r.Add(ConstResult.Of(a.lastConst)); };
+
+        private static readonly Action<Ll1SyntaxAnalyzer> IdentToR = a =>
         {
-            a.r.Add(ConstResult.Of(a.lastConst));
+            var v = a.FindVar(a.lastId);
+            a.Gen(Operation.Load, v.FullName);
+            a.r.Add(TriadResult.Of(a.Ir.Count - 1));
         };
+
         private static readonly Action<Ll1SyntaxAnalyzer> aa = a => { };
     }
 
