@@ -566,13 +566,8 @@ namespace Language.Analyzer
         private static readonly Action<Ll1SyntaxAnalyzer> GenFunctionEpilog = a =>
         {
             var fn = a.TryFindVar(a.fnName);
-            foreach (var param in fn.Params)
-            {
-                a.Gen(Operation.Pop, param.FullName);
-            }
-
             a.envs.Pop().Dispose();
-            a.Gen(Operation.Ret);
+            a.Gen(Operation.Ret, GetSize(fn.Params.Select(p => p.Type).ToArray()));
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> SaveType = a => { a.lastType = a.ttype; };

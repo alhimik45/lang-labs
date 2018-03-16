@@ -9,6 +9,5 @@ void rec(int gg, char g){
 }
 /*
 s/destroy/calculation
-s/pop/ret n/
 
 */
