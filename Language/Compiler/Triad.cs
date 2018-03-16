@@ -1,4 +1,6 @@
-﻿namespace Language.Compiler
+﻿using Language.Analyzer;
+
+namespace Language.Compiler
 {
     public class Triad
     {
@@ -14,6 +16,11 @@
                 Arg1 = arg1,
                 Arg2 = arg2
             };
+        }
+
+        public override string ToString()
+        {
+            return $"{Operation.ToStr()}\t{Arg1}\t{Arg2}";
         }
     }
 }

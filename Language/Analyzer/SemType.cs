@@ -3,9 +3,9 @@
     public enum SemType
     {
         Undefined = 0,
+        Char,
         Int,
         LongLongInt,
-        Char,
         Function
     }
 }

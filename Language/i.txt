@@ -1,5 +1,9 @@
-void kek(int gg, char g){
+void rec(int gg, char g){
     for(int a = 1; a-2; a =  a - 1){
-            kek(a+5, 'h');
+            rec(a+5, 'h');
+            {{
+            int abc, bcdm,cdc,cdcd;
+            for(int y = 0; abc+cdcd;bcdm = cdc+1){}
+            }}
     }
 }

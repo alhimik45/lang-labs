@@ -194,7 +194,8 @@ namespace Language.Analyzer
                 },
                 ["call".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
-                    [LexType.Tlparen] = new ITerm[] {LexType.Tlparen.Of(), "cparams".Of(), LexType.Trparen.Of(), GenCall.Of()},
+                    [LexType.Tlparen] = new ITerm[]
+                        {LexType.Tlparen.Of(), "cparams".Of(), LexType.Trparen.Of(), GenCall.Of()},
                 },
                 ["cparams".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -203,7 +204,7 @@ namespace Language.Analyzer
                     [LexType.Tinto] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
                     [LexType.Tintd] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
                     [LexType.Tchar] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
-                    [LexType.Tlparen] = new ITerm[] {"expr".Of(),PushParam.Of(),  "X".Of()},
+                    [LexType.Tlparen] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
                     [LexType.Tnot] = new ITerm[] {"expr".Of(), PushParam.Of(), "X".Of()},
                     [LexType.Trparen] = new ITerm[] { },
                 },
@@ -559,6 +560,7 @@ namespace Language.Analyzer
             {
                 a.Gen(Operation.Pop, param.FullName);
             }
+
             a.envs.Pop().Dispose();
             a.Gen(Operation.Ret);
         };
@@ -598,7 +600,7 @@ namespace Language.Analyzer
         {
             var v = a.FindVar(a.lastId);
             a.Gen(Operation.Load, v.FullName);
-            a.r.Push(TriadResult.Of(a.Ir.Count - 1));
+            a.r.Push(TriadResult.Of(a.Ir.Count - 1, v.Type));
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenBinary = a =>
@@ -639,17 +641,32 @@ namespace Language.Analyzer
                     break;
             }
 
+
             var o2 = a.r.Pop();
             var o1 = a.r.Pop();
+            var resType = (SemType) Math.Max((int) o1.Type, (int) o2.Type);
+            if (resType != o1.Type)
+            {
+                a.Gen(Operation.Cast, o1, GetSize(resType));
+                o1 = TriadResult.Of(a.Ir.Count - 1, resType);
+            }
+
+            if (resType != o2.Type)
+            {
+                a.Gen(Operation.Cast, o2, GetSize(resType));
+                o2 = TriadResult.Of(a.Ir.Count - 1, resType);
+            }
+
             a.Gen(o, o1, o2);
-            a.r.Push(TriadResult.Of(a.Ir.Count - 1));
+            a.r.Push(TriadResult.Of(a.Ir.Count - 1, resType));
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenNot = a =>
         {
             a.ops.Pop();
-            a.Gen(Operation.Not, a.r.Pop());
-            a.r.Push(TriadResult.Of(a.Ir.Count - 1));
+            var r = a.r.Pop();
+            a.Gen(Operation.Not, r);
+            a.r.Push(TriadResult.Of(a.Ir.Count - 1, r.Type));
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> StartSave = a =>
@@ -694,7 +711,14 @@ namespace Language.Analyzer
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenJump = a =>
         {
-            a.Gen(Operation.Jz, TriadResult.Of(a.Ir.Count - 1), null);
+            var o = a.r.Pop();
+            if (SemType.Int != o.Type)
+            {
+                a.Gen(Operation.Cast, o, GetSize(SemType.Int));
+                o = TriadResult.Of(a.Ir.Count - 1, SemType.Int);
+            }
+
+            a.Gen(Operation.Jz, o);
             a.jumps.Push(a.Ir.Count - 1);
         };
 
@@ -714,10 +738,7 @@ namespace Language.Analyzer
 
         private Lexema lastFn;
         private static readonly Action<Ll1SyntaxAnalyzer> FunName = a => { a.lastFn = a.lastId; };
-        private static readonly Action<Ll1SyntaxAnalyzer> PushParam = a =>
-        {
-            a.Gen(Operation.Push, a.r.Pop());
-        };
+        private static readonly Action<Ll1SyntaxAnalyzer> PushParam = a => { a.Gen(Operation.Push, a.r.Pop()); };
         private static readonly Action<Ll1SyntaxAnalyzer> aa = a => { };
     }
 
@@ -842,7 +863,7 @@ namespace Language.Analyzer
             var i = 0;
             foreach (var triad in program)
             {
-                s += $"{i}) {triad.Operation.ToStr()}\t{triad.Arg1}\t{triad.Arg2}\n";
+                s += $"{i}) {triad}\n";
                 ++i;
             }
 

@@ -28,5 +28,6 @@
         Param,
         Push,
         Pop,
+        Cast,
     }
 }
