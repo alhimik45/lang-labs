@@ -599,7 +599,10 @@ namespace Language.Analyzer
             var v = a.AddVar(a.lastId, a.lastType);
             a.currVar = v;
             var size = GetSize(a.lastType);
-            a.Gen(a.scopes.Count <= 2 ? Operation.GlobVar : Operation.LocVar, v.FullName, size);
+            if (a.scopes.Count <= 2)
+            {
+                a.Gen(Operation.GlobVar, v.FullName, size);
+            }
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> Begin = a =>
