@@ -619,7 +619,7 @@ namespace Language.Analyzer
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenAssign = a =>
         {
-            a.Gen(Operation.Assign, a.currVar.FullName, a.r.Pop());
+            a.Gen(Operation.Assign, VariableResult.Of(a.currVar), a.r.Pop());
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> ConstToR = a => { a.r.Push(ConstResult.Of(a.lastConst)); };
@@ -674,13 +674,13 @@ namespace Language.Analyzer
             var resType = (SemType) Math.Max((int) o1.Type, (int) o2.Type);
             if (resType != o1.Type)
             {
-                a.Gen(Operation.Cast, o1, GetSize(resType));
+                a.Gen(Operation.Cast, o1, resType);
                 o1 = TriadResult.Of(a.Ir.Count - 1, resType);
             }
 
             if (resType != o2.Type)
             {
-                a.Gen(Operation.Cast, o2, GetSize(resType));
+                a.Gen(Operation.Cast, o2, resType);
                 o2 = TriadResult.Of(a.Ir.Count - 1, resType);
             }
 
@@ -759,7 +759,7 @@ namespace Language.Analyzer
             var o = a.r.Pop();
             if (SemType.Int != o.Type)
             {
-                a.Gen(Operation.Cast, o, GetSize(SemType.Int));
+                a.Gen(Operation.Cast, o, SemType.Int);
                 o = TriadResult.Of(a.Ir.Count - 1, SemType.Int);
             }
 
