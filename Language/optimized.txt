@@ -4,7 +4,7 @@
 3) Alloc	13	
 4) Assign	/1/2/3/bb{0}	6
 5) Assign	/1/2/3/r{1}	6
-6) Cast	6	Int
+6) Nop		
 7) Add	(6)	/1/2/3/r{1}
 8) Add	(7)	6
 9) Add	(8)	7

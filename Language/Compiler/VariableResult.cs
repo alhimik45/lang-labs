@@ -1,8 +1,9 @@
-﻿using Language.Analyzer;
+﻿using System;
+using Language.Analyzer;
 
 namespace Language.Compiler
 {
-    public class VariableResult : IResult
+    public class VariableResult : IResult, IEquatable<VariableResult>
     {
         public VarInfo Var { get; set; }
         public SemType Type => Var.Type;
@@ -16,19 +17,30 @@ namespace Language.Compiler
         {
             return $"{Var.FullName}";
         }
-        
-        protected bool Equals(VariableResult other)
+
+        public bool Equals(VariableResult other)
         {
-            return Equals(Var, other.Var);
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            return ReferenceEquals(this, other) || Equals(Var, other.Var);
         }
 
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj))
+            {
                 return false;
+            }
+
             if (ReferenceEquals(this, obj))
+            {
                 return true;
-            return obj.GetType() == GetType() && Equals((VariableResult)obj);
+            }
+
+            return obj.GetType() == GetType() && Equals((VariableResult) obj);
         }
 
         public override int GetHashCode()

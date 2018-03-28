@@ -5,6 +5,19 @@ namespace Language.Compiler
 {
     public class TriadResult : IResult, IEquatable<TriadResult>
     {
+        public int Index { get; set; }
+        public SemType Type { get; private set; }
+
+        public static TriadResult Of(int index, SemType type)
+        {
+            return new TriadResult {Index = index, Type = type};
+        }
+
+        public override string ToString()
+        {
+            return $"({Index})";
+        }
+        
         public bool Equals(TriadResult other)
         {
             if (ReferenceEquals(null, other))
@@ -41,19 +54,6 @@ namespace Language.Compiler
             {
                 return (Index * 397) ^ (int) Type;
             }
-        }
-
-        public int Index { get; set; }
-        public SemType Type { get; private set; }
-
-        public static TriadResult Of(int index, SemType type)
-        {
-            return new TriadResult {Index = index, Type = type};
-        }
-
-        public override string ToString()
-        {
-            return $"({Index})";
         }
     }
 }

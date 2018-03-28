@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Language.Analyzer;
 
 namespace Language.Compiler
 {
@@ -75,7 +76,12 @@ namespace Language.Compiler
                 {
                     if (triad.Arg1 != null && constValues.ContainsKey(triad.Arg1))
                     {
-                        triad.Arg1 = constValues[triad.Arg1];
+                        var tr = constValues[triad.Arg1];
+                        constValues[TriadResult.Of(i, triad.Arg2)] = constValues[triad.Arg1] =
+                            ConstResult.Of(triad.Arg2 == SemType.Int ? (int) tr.Value :
+                                triad.Arg2 == SemType.LongLongInt ? (long) tr.Value : (char) tr.Value);
+                        triad.Operation = Operation.Nop;
+                        triad.Arg1 = triad.Arg2 = null;
                     }
                 }
 
