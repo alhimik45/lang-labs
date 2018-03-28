@@ -4,16 +4,16 @@
 3) Alloc	13	
 4) Assign	/1/2/3/bb{0}	6
 5) Assign	/1/2/3/r{1}	99
-6) Cast	/1/2/3/bb{0}	Int
-7) Add	(6)	/1/2/3/r{1}
+6) Nop		
+7) Nop		
 8) Add	(7)	11
 9) Add	(8)	7
 10) Assign	/1/2/3/gg{5}	(9)
-11) Push	/1/2/3/r{1}	
-12) Push	/1/2/3/bb{0}	
+11) Nop		
+12) Nop		
 13) Call	/1/rec{0}	
 14) Assign	/1/2/3/4/y{9}	0
-15) Sub	/1/2/3/4/y{9}	1
+15) Nop		
 16) Jz	(15)	22
 17) Add	/1/2/3/r{1}	33
 18) Assign	/1/2/3/4/y{9}	(17)
