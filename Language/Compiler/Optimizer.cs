@@ -80,9 +80,22 @@ namespace Language.Compiler
                     if (triad.Arg1 != null && constValues.ContainsKey(triad.Arg1))
                     {
                         var tr = constValues[triad.Arg1];
-                        constValues[TriadResult.Of(i, triad.Arg2)] = constValues[triad.Arg1] =
-                            ConstResult.Of(triad.Arg2 == SemType.Int ? (int) tr.Value :
-                                triad.Arg2 == SemType.LongLongInt ? (long) tr.Value : (char) tr.Value);
+                        dynamic val;
+                        switch (triad.Arg2)
+                        {
+                            case SemType.Int:
+                                val = (int)tr.Value;
+                                break;
+                            case SemType.LongLongInt:
+                                val = (long)tr.Value;
+                                break;
+                            case SemType.Char:
+                                val = (char)tr.Value;
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException(nameof(tr.Value));
+                        }
+                        constValues[TriadResult.Of(i, triad.Arg2)] = ConstResult.Of(val);
                         triad.Operation = Operation.Nop;
                         triad.Arg1 = triad.Arg2 = null;
                     }
