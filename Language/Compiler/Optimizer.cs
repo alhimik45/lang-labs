@@ -48,13 +48,14 @@ namespace Language.Compiler
         {
             var res = new List<List<(Triad, int)>>();
             var ll = new List<(Triad, int)>();
-            var dests = ir.Where(tr => tr.Operation == Operation.Jmp).Select(tr => (int)tr.Arg1)
+            var dests = ir.Where(tr => tr.Operation == Operation.Jmp)
+                .Select(tr => (int)tr.Arg1)
                 .Union(ir.Where(tr => tr.Operation == Operation.Jz).Select(tr => (int)tr.Arg2));
             for (var i = 0; i < ir.Count; i++)
             {
                 var triad = ir[i];
                 ll.Add((triad, i));
-                if (splitOps.Contains(triad.Operation) || dests.Contains(i+1))
+                if (splitOps.Contains(triad.Operation) || dests.Contains(i + 1))
                 {
                     res.Add(ll);
                     ll = new List<(Triad, int)>();
@@ -69,6 +70,7 @@ namespace Language.Compiler
         {
             var constValues = new Dictionary<IResult, ConstResult>();
             var res = new List<Triad>();
+            var halfOk = new Dictionary<int,int>();
             for (var i = 0; i < code.Count; i++)
             {
                 var triad = code[i].Item1;
@@ -129,49 +131,7 @@ namespace Language.Compiler
                     {
                         if (triad.Arg2 == null || triad.Arg2 is ConstResult)
                         {
-                            dynamic val = null;
-                            var val2 = triad.Arg2 is ConstResult cr2 ? cr2.Value : null;
-                            switch (triad.Operation)
-                            {
-                                case Operation.Add:
-                                    val = ConstResult.Of(cr1.Value + val2);
-                                    break;
-                                case Operation.Sub:
-                                    val = ConstResult.Of(cr1.Value - val2);
-                                    break;
-                                case Operation.Mul:
-                                    val = ConstResult.Of(cr1.Value*val2);
-                                    break;
-                                case Operation.Div:
-                                    val = ConstResult.Of(cr1.Value/val2);
-                                    break;
-                                case Operation.Mod:
-                                    val = ConstResult.Of(cr1.Value%val2);
-                                    break;
-                                case Operation.And:
-                                    val = ConstResult.Of(cr1.Value & val2);
-                                    break;
-                                case Operation.Or:
-                                    val = ConstResult.Of(cr1.Value | val2);
-                                    break;
-                                case Operation.Xor:
-                                    val = ConstResult.Of(cr1.Value ^ val2);
-                                    break;
-                                case Operation.Lshift:
-                                    val = ConstResult.Of(cr1.Value << val2);
-                                    break;
-                                case Operation.Rshift:
-                                    val = ConstResult.Of(cr1.Value >> val2);
-                                    break;
-                                case Operation.Not:
-                                    val = ConstResult.Of(~cr1.Value);
-                                    break;
-                                case Operation.Push:
-                                case Operation.Jz:
-                                    break;
-                                default:
-                                    throw new ArgumentOutOfRangeException(nameof(triad.Operation));
-                            }
+                            var val = EvalConst(triad.Operation, cr1, triad.Arg2 is ConstResult cr3 ? cr3.Value : null);
 
                             if (val != null)
                             {
@@ -181,11 +141,104 @@ namespace Language.Compiler
                             }
                         }
                     }
+
+                    if (triad.Arg1 is ConstResult || triad.Arg2 is ConstResult)
+                        halfOk[code[i].Item2] = i;
+
+                    if (triad.Arg1 is TriadResult tr &&
+                        triad.Arg2 is ConstResult crr1 &&
+                        halfOk.ContainsKey(tr.Index) &&
+                        triad.Operation == res[halfOk[tr.Index]].Operation)
+                    {
+                        var tr2 = res[halfOk[tr.Index]];
+                        if (tr2.Arg1 is ConstResult crr2)
+                        {
+                            triad.Arg1 = tr2.Arg2;
+                            triad.Arg2 = ConstResult.Of(EvalConst(triad.Operation, crr1, crr2.Value));
+                            tr2.Operation = Operation.Nop;
+                            tr2.Arg1 = tr2.Arg2 = null;
+                        }
+                        if (tr2.Arg2 is ConstResult crr3)
+                        {
+                            triad.Arg1 = tr2.Arg1;
+                            triad.Arg2 = ConstResult.Of(EvalConst(triad.Operation, crr1, crr3.Value));
+                            tr2.Operation = Operation.Nop;
+                            tr2.Arg1 = tr2.Arg2 = null;
+                        }
+                    }
+                    if (triad.Arg2 is TriadResult trr &&
+                        triad.Arg1 is ConstResult crr4 &&
+                        halfOk.ContainsKey(trr.Index) &&
+                        triad.Operation == res[halfOk[trr.Index]].Operation)
+                    {
+                        var tr2 = res[halfOk[trr.Index]];
+                        if (tr2.Arg1 is ConstResult crr2)
+                        {
+                            triad.Arg2 = tr2.Arg2;
+                            triad.Arg1 = ConstResult.Of(EvalConst(triad.Operation, crr4, crr2.Value));
+                            tr2.Operation = Operation.Nop;
+                            tr2.Arg1 = tr2.Arg2 = null;
+                        }
+                        if (tr2.Arg2 is ConstResult crr3)
+                        {
+                            triad.Arg2 = tr2.Arg1;
+                            triad.Arg1 = ConstResult.Of(EvalConst(triad.Operation, crr4, crr3.Value));
+                            tr2.Operation = Operation.Nop;
+                            tr2.Arg1 = tr2.Arg2 = null;
+                        }
+                    }
                 }
                 res.Add(triad);
             }
 
             return res;
+        }
+
+        private static dynamic EvalConst(Operation op, ConstResult cr1, dynamic v2)
+        {
+            ConstResult val = null;
+            switch (op)
+            {
+                case Operation.Add:
+                    val = ConstResult.Of(cr1.Value + v2);
+                    break;
+                case Operation.Sub:
+                    val = ConstResult.Of(cr1.Value - v2);
+                    break;
+                case Operation.Mul:
+                    val = ConstResult.Of(cr1.Value*v2);
+                    break;
+                case Operation.Div:
+                    val = ConstResult.Of(cr1.Value/v2);
+                    break;
+                case Operation.Mod:
+                    val = ConstResult.Of(cr1.Value%v2);
+                    break;
+                case Operation.And:
+                    val = ConstResult.Of(cr1.Value & v2);
+                    break;
+                case Operation.Or:
+                    val = ConstResult.Of(cr1.Value | v2);
+                    break;
+                case Operation.Xor:
+                    val = ConstResult.Of(cr1.Value ^ v2);
+                    break;
+                case Operation.Lshift:
+                    val = ConstResult.Of(cr1.Value << v2);
+                    break;
+                case Operation.Rshift:
+                    val = ConstResult.Of(cr1.Value >> v2);
+                    break;
+                case Operation.Not:
+                    val = ConstResult.Of(~cr1.Value);
+                    break;
+                case Operation.Push:
+                case Operation.Jz:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(op));
+            }
+            return val;
         }
     }
 }
