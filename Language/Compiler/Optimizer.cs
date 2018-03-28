@@ -82,9 +82,10 @@ namespace Language.Compiler
 
                 if (triad.Operation == Operation.Cast)
                 {
-                    if (triad.Arg1 != null && constValues.ContainsKey(triad.Arg1))
+                    var tr = constValues.TryGetValue(triad.Arg1, out ConstResult r) ? r :
+                        triad.Arg1 is ConstResult cr ? cr : null;
+                    if (tr != null)
                     {
-                        var tr = constValues[triad.Arg1];
                         dynamic val;
                         switch (triad.Arg2)
                         {
