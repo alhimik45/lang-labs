@@ -69,6 +69,11 @@ namespace Language.Compiler
                 var triad = code[i];
                 if (triad.Operation == Operation.Assign)
                 {
+                    if (constValues.ContainsKey(triad.Arg2))
+                    {
+                        triad.Arg2 = constValues[triad.Arg2];
+                    }
+
                     if (triad.Arg2 is ConstResult)
                     {
                         constValues[triad.Arg1] = triad.Arg2;
@@ -84,17 +89,18 @@ namespace Language.Compiler
                         switch (triad.Arg2)
                         {
                             case SemType.Int:
-                                val = (int)tr.Value;
+                                val = (int) tr.Value;
                                 break;
                             case SemType.LongLongInt:
-                                val = (long)tr.Value;
+                                val = (long) tr.Value;
                                 break;
                             case SemType.Char:
-                                val = (char)tr.Value;
+                                val = (char) tr.Value;
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException(nameof(tr.Value));
                         }
+
                         constValues[TriadResult.Of(i, triad.Arg2)] = ConstResult.Of(val);
                         triad.Operation = Operation.Nop;
                         triad.Arg1 = triad.Arg2 = null;
@@ -117,40 +123,55 @@ namespace Language.Compiler
                     {
                         if (triad.Arg2 == null || triad.Arg2 is ConstResult)
                         {
+                            dynamic val = null;
                             var val2 = triad.Arg2 is ConstResult cr2 ? cr2.Value : null;
                             switch (triad.Operation)
                             {
                                 case Operation.Add:
-                                    var val = ConstResult.Of(cr1.Value + val2);
-                                    constValues[TriadResult.Of(i, val.Type)] = val;
+                                    val = ConstResult.Of(cr1.Value + val2);
                                     break;
                                 case Operation.Sub:
+                                    val = ConstResult.Of(cr1.Value - val2);
                                     break;
                                 case Operation.Mul:
+                                    val = ConstResult.Of(cr1.Value * val2);
                                     break;
                                 case Operation.Div:
+                                    val = ConstResult.Of(cr1.Value / val2);
                                     break;
                                 case Operation.Mod:
+                                    val = ConstResult.Of(cr1.Value % val2);
                                     break;
                                 case Operation.And:
+                                    val = ConstResult.Of(cr1.Value & val2);
                                     break;
                                 case Operation.Or:
+                                    val = ConstResult.Of(cr1.Value | val2);
                                     break;
                                 case Operation.Xor:
+                                    val = ConstResult.Of(cr1.Value ^ val2);
                                     break;
                                 case Operation.Lshift:
+                                    val = ConstResult.Of(cr1.Value << val2);
                                     break;
                                 case Operation.Rshift:
+                                    val = ConstResult.Of(cr1.Value >> val2);
                                     break;
                                 case Operation.Not:
+                                    val = ConstResult.Of(~cr1.Value);
                                     break;
                                 case Operation.Push:
                                     break;
                                 default:
                                     throw new ArgumentOutOfRangeException(nameof(triad.Operation));
                             }
-                            triad.Operation = Operation.Nop;
-                            triad.Arg1 = triad.Arg2 = null;
+
+                            if (val != null)
+                            {
+                                constValues[TriadResult.Of(i, val.Type)] = val;
+                                triad.Operation = Operation.Nop;
+                                triad.Arg1 = triad.Arg2 = null;
+                            }
                         }
                     }
                 }
