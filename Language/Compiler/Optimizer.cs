@@ -97,8 +97,6 @@ namespace Language.Compiler
                         triad.Arg2 = constValues[triad.Arg2];
                     }
                 }
-
-                ++i;
             }
 
             return code;

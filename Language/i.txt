@@ -1,9 +1,9 @@
 void rec(int gg, char g){
     char bb = 6;
-    int r = 6;
-    int gg = bb + r + 6 +7;
+    int r = 99;
+    int gg = bb + r + 11 +7;
     rec(r, bb);
     for(int y = 0; y -1 ; y = y + 1){
-        r = r + 6;
+        r = r + 33;
     }
 }
