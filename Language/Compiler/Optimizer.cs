@@ -31,6 +31,7 @@ namespace Language.Compiler
             Operation.Call,
             Operation.Jmp,
             Operation.Jz,
+            Operation.Proc,
         };
 
         public Optimizer(List<Triad> ir)
