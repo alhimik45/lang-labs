@@ -50,8 +50,8 @@ namespace Language.Compiler
             var res = new List<List<(Triad, int)>>();
             var ll = new List<(Triad, int)>();
             var dests = ir.Where(tr => tr.Operation == Operation.Jmp)
-                .Select(tr => (int)tr.Arg1)
-                .Union(ir.Where(tr => tr.Operation == Operation.Jz).Select(tr => (int)tr.Arg2));
+                .Select(tr => (int) tr.Arg1)
+                .Union(ir.Where(tr => tr.Operation == Operation.Jz).Select(tr => (int) tr.Arg2));
             for (var i = 0; i < ir.Count; i++)
             {
                 var triad = ir[i];
@@ -71,7 +71,7 @@ namespace Language.Compiler
         {
             var constValues = new Dictionary<IResult, ConstResult>();
             var res = new List<Triad>();
-            var halfOk = new Dictionary<int,int>();
+            var halfOk = new Dictionary<int, int>();
             for (var i = 0; i < code.Count; i++)
             {
                 var triad = code[i].Item1;
@@ -98,13 +98,13 @@ namespace Language.Compiler
                         switch (triad.Arg2)
                         {
                             case SemType.Int:
-                                val = (int)tr.Value;
+                                val = (int) tr.Value;
                                 break;
                             case SemType.LongLongInt:
-                                val = (long)tr.Value;
+                                val = (long) tr.Value;
                                 break;
                             case SemType.Char:
-                                val = (char)tr.Value;
+                                val = (char) tr.Value;
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException(nameof(tr.Value));
@@ -159,6 +159,7 @@ namespace Language.Compiler
                             tr2.Operation = Operation.Nop;
                             tr2.Arg1 = tr2.Arg2 = null;
                         }
+
                         if (tr2.Arg2 is ConstResult crr3)
                         {
                             triad.Arg1 = tr2.Arg1;
@@ -167,6 +168,7 @@ namespace Language.Compiler
                             tr2.Arg1 = tr2.Arg2 = null;
                         }
                     }
+
                     if (triad.Arg2 is TriadResult trr &&
                         triad.Arg1 is ConstResult crr4 &&
                         halfOk.ContainsKey(trr.Index) &&
@@ -180,6 +182,7 @@ namespace Language.Compiler
                             tr2.Operation = Operation.Nop;
                             tr2.Arg1 = tr2.Arg2 = null;
                         }
+
                         if (tr2.Arg2 is ConstResult crr3)
                         {
                             triad.Arg2 = tr2.Arg1;
@@ -189,7 +192,27 @@ namespace Language.Compiler
                         }
                     }
                 }
+
                 res.Add(triad);
+            }
+
+            for (var i = 0; i < res.Count; i++)
+            {
+                var triad = res[i];
+                if (triad.Operation == Operation.Assign)
+                {
+                    var j = i + 1;
+                    while (j < res.Count && res[j].Operation == Operation.Nop)
+                    {
+                        ++j;
+                    }
+
+                    if (j < res.Count && res[j].Operation == Operation.Assign && res[j].Arg1.Equals(triad.Arg1))
+                    {
+                        triad.Operation = Operation.Nop;
+                        triad.Arg1 = triad.Arg2 = null;
+                    }
+                }
             }
 
             return res;
@@ -207,13 +230,13 @@ namespace Language.Compiler
                     val = ConstResult.Of(cr1.Value - v2);
                     break;
                 case Operation.Mul:
-                    val = ConstResult.Of(cr1.Value*v2);
+                    val = ConstResult.Of(cr1.Value * v2);
                     break;
                 case Operation.Div:
-                    val = ConstResult.Of(cr1.Value/v2);
+                    val = ConstResult.Of(cr1.Value / v2);
                     break;
                 case Operation.Mod:
-                    val = ConstResult.Of(cr1.Value%v2);
+                    val = ConstResult.Of(cr1.Value % v2);
                     break;
                 case Operation.And:
                     val = ConstResult.Of(cr1.Value & v2);
@@ -239,6 +262,7 @@ namespace Language.Compiler
                 default:
                     throw new ArgumentOutOfRangeException(nameof(op));
             }
+
             return val;
         }
     }
