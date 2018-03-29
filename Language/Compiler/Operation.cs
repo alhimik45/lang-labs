@@ -5,7 +5,6 @@
         Undefined = 0,
         Proc,
         GlobVar,
-        LocVar,
         Ret,
         Assign,
         Add,
@@ -27,6 +26,6 @@
         Push,
         Cast,
         Alloc,
-        Free,
+        Free
     }
 }

@@ -12,6 +12,16 @@ namespace Language.Generator
 .intel_syntax noprefix	# используем синтаксис интел вместо AT&T
 ";
 
+        private const string Footer = @"
+mov rdi, offset TOINTFMT
+mov rsi, v_1_r_0_
+mov rax,0
+call printf
+mov rax, 60
+mov rdi, 0
+syscall
+";
+
         private readonly List<Triad> ir;
 
         private readonly List<VarInfo> bssVars;
@@ -35,7 +45,11 @@ namespace Language.Generator
             return ".data\n\tTOINTFMT:  .asciz \"Вывод: %d\\n\"\n" + string.Join("\n",
                        dataVars.Select(v =>
                            $"\t{v.var.ReadableName}: {new Dictionary<SemType, string> {[SemType.Char] = ".byte", [SemType.Int] = ".int", [SemType.LongLongInt] = ".long"}[v.var.Type]} {v.val.Cast(v.var.Type)}")) +
-                   "\n";
+                   @"
+.text
+    .global _start
+_start:
+";
         }
 
         public string Generate()
@@ -56,7 +70,40 @@ namespace Language.Generator
                 }
             }
 
-            return Header + GenBss() + GenData();
+            return Header + GenBss() + GenData() + GenMain() + Footer;
+        }
+
+        private string GenMain()
+        {
+            var s = "";
+            for (var i = 0; i < ir.Count; i++)
+            {
+                var triad = ir[i];
+                switch (triad.Operation)
+                {
+                    case Operation.Assign:
+                        break;
+                    case Operation.Add:
+                        break;
+                    case Operation.Sub:
+                        break;
+                    case Operation.Cast:
+                        break;
+                    case Operation.Alloc:
+                        s += $@"push rbp
+mov rbp, rsp
+sub rsp, {triad.Arg1}
+";
+                        break;
+                    case Operation.Free:
+                        s += $@"add rsp, {triad.Arg1}
+pop rbp
+";
+                        break;
+                }
+            }
+
+            return s;
         }
     }
 }

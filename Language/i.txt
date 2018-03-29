@@ -2,12 +2,9 @@ int r = 77;
 char  ye = 67;
 char  ff;
 int yew = 'r';
-void main(int gg, char g){
+void main(){
     char bb = 6;
-    int gg = bb - r * (r / 7) + (bb << 2); //  -817
+    int gg = bb - r * (ye / 7) + (bb << 2);
     gg = gg + 1;
-    for(int y = 0; y -1 ; y = y + 1){
-        int hh = 'b' + 2; //100
-        r = r + (33 + hh * 8); // + 833
-    }
+    r = gg;
 }

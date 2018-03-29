@@ -6,5 +6,20 @@
 	TOINTFMT:  .asciz "Вывод: %d\n"
 	v_1_r_0_: .int 77
 	v_1_ye_4_: .byte 67
-	v_1_rrr_6_: .byte 106
-	v_1_yew_7_: .int 114
+	v_1_yew_6_: .int 114
+.text
+    .global _start
+_start:
+push rbp
+mov rbp, rsp
+sub rsp, 5
+add rsp, 5
+pop rbp
+
+mov rdi, offset TOINTFMT
+mov rsi, v_1_r_0_
+mov rax,0
+call printf
+mov rax, 60
+mov rdi, 0
+syscall
