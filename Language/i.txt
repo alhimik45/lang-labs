@@ -1,4 +1,7 @@
 int r = 77;
+char  ye = 67;
+char  ff;
+int yew = 'r';
 void main(int gg, char g){
     char bb = 6;
     int gg = bb - r * (r / 7) + (bb << 2); //  -817

@@ -1,0 +1,62 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+using Language.Analyzer;
+using Language.Compiler;
+
+namespace Language.Generator
+{
+    public class AsmGenerator
+    {
+        private const string Header =
+            @".extern printf 			# экспорт функции печати
+.intel_syntax noprefix	# используем синтаксис интел вместо AT&T
+";
+
+        private readonly List<Triad> ir;
+
+        private readonly List<VarInfo> bssVars;
+        private readonly List<(VarInfo var, ConstResult val)> dataVars;
+
+        public AsmGenerator(List<Triad> ir)
+        {
+            this.ir = ir;
+            bssVars = new List<VarInfo>();
+            dataVars = new List<(VarInfo, ConstResult)>();
+        }
+
+        public string GenBss()
+        {
+            return ".bss\n" + string.Join("\n",
+                       bssVars.Select(v => $"\t.lcomm {v.ReadableName}, {Ll1SyntaxAnalyzer.GetSize(v.Type)}")) + "\n";
+        }
+
+        public string GenData()
+        {
+            return ".data\n\tTOINTFMT:  .asciz \"Вывод: %d\\n\"\n" + string.Join("\n",
+                       dataVars.Select(v =>
+                           $"\t{v.var.ReadableName}: {new Dictionary<SemType, string> {[SemType.Char] = ".byte", [SemType.Int] = ".int", [SemType.LongLongInt] = ".long"}[v.var.Type]} {v.val.Cast(v.var.Type)}")) +
+                   "\n";
+        }
+
+        public string Generate()
+        {
+            for (var i = 0; i < ir.Count; i++)
+            {
+                var triad = ir[i];
+                if (triad.Operation == Operation.GlobVar)
+                {
+                    if (i + 1 < ir.Count && ir[i + 1].Operation == Operation.Assign)
+                    {
+                        dataVars.Add((ir[i + 1].Arg1.Var, ir[i + 1].Arg2));
+                    }
+                    else
+                    {
+                        bssVars.Add(triad.Arg1.Var);
+                    }
+                }
+            }
+
+            return Header + GenBss() + GenData();
+        }
+    }
+}

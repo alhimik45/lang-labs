@@ -1,0 +1,10 @@
+.extern printf 			# экспорт функции печати
+.intel_syntax noprefix	# используем синтаксис интел вместо AT&T
+.bss
+	.lcomm v_1_ff_5_, 1
+.data
+	TOINTFMT:  .asciz "Вывод: %d\n"
+	v_1_r_0_: .int 77
+	v_1_ye_4_: .byte 67
+	v_1_rrr_6_: .byte 106
+	v_1_yew_7_: .int 114

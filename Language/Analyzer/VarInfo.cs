@@ -28,5 +28,7 @@ namespace Language.Analyzer
         {
             Params.Add(var);
         }
+
+        public string ReadableName => "v" + FullName.Replace('/', '_').Replace('{','_').Replace('}','_');
     }
 }

@@ -2,6 +2,7 @@
 using System.IO;
 using Language.Analyzer;
 using Language.Compiler;
+using Language.Generator;
 using Language.Scan;
 
 namespace Language
@@ -41,8 +42,10 @@ namespace Language
             Console.WriteLine("Program is correct!");
             File.WriteAllText("code.txt", a.Ir.ToListing());
             Console.WriteLine("Code writed!");
-            File.WriteAllText("optimized.txt", new Optimizer(a.Ir).Optimize().ToListing());
-            Console.WriteLine("Optimized code writed!");
+            File.WriteAllText("asm.txt", new AsmGenerator(a.Ir).Generate());
+            Console.WriteLine("Asm generated!");
+//            File.WriteAllText("optimized.txt", new Optimizer(a.Ir).Optimize().ToListing());
+//            Console.WriteLine("Optimized code writed!");
         }
     }
 }

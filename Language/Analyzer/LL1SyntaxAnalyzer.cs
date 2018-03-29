@@ -537,7 +537,7 @@ namespace Language.Analyzer
             return res;
         }
 
-        private static int GetSize(params SemType[] types)
+        public static int GetSize(params SemType[] types)
         {
             return types.Select(t => new Dictionary<SemType, int>
             {
@@ -601,7 +601,7 @@ namespace Language.Analyzer
             var size = GetSize(a.lastType);
             if (a.scopes.Count <= 2)
             {
-                a.Gen(Operation.GlobVar, v.FullName, size);
+                a.Gen(Operation.GlobVar, VariableResult.Of(v), size);
             }
         };
 

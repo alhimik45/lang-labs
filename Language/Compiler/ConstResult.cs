@@ -1,4 +1,5 @@
-﻿using Language.Analyzer;
+﻿using System;
+using Language.Analyzer;
 
 namespace Language.Compiler
 {
@@ -15,6 +16,21 @@ namespace Language.Compiler
         public override string ToString()
         {
             return Value.ToString();
+        }
+
+        public dynamic Cast(SemType type)
+        {
+            switch (type)
+            {
+                case SemType.Int:
+                    return (int) Value;
+                case SemType.LongLongInt:
+                    return(long) Value;
+                case SemType.Char:
+                    return (byte) Value;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type));
+            }
         }
     }
 }
