@@ -1,11 +1,10 @@
-void rec(int gg, char g){
+int r = 77;
+void main(int gg, char g){
     char bb = 6;
-    int r = 77;
     int gg = bb - r * (r / 7) + (bb << 2); //  -817
     gg = gg + 1;
-    rec(r % 10 , gg);
     for(int y = 0; y -1 ; y = y + 1){
         int hh = 'b' + 2; //100
-        r = r + 33 + hh * 8; // + 833
+        r = r + (33 + hh * 8); // + 833
     }
 }
