@@ -76,11 +76,16 @@ _start:
         private string GenMain()
         {
             var s = "";
+            var globs = new HashSet<VarInfo>();
+            var places = new Dictionary<VarInfo, string>();
             for (var i = 0; i < ir.Count; i++)
             {
                 var triad = ir[i];
                 switch (triad.Operation)
                 {
+                    case Operation.GlobVar:
+                        globs.Add(triad.Arg1.Var);
+                        break;
                     case Operation.Assign:
                         break;
                     case Operation.Add:

@@ -4,7 +4,7 @@ char  ff;
 int yew = 'r';
 void main(){
     char bb = 6;
-    int gg = bb - r * (ye / 7) + (bb << 2);
+    int gg = bb - r + (ye - 7) - (bb - 2);
     gg = gg + 1;
-    r = gg;
+    r = gg; // -14
 }
