@@ -180,7 +180,7 @@ namespace Language.Analyzer
                     [LexType.Tor] = new ITerm[] {IdentToR.Of(), LexType.Tor.Of(), "A3".Of(), GenBinary.Of(), "Q6".Of()},
                     [LexType.Tand] = new ITerm[]
                         {IdentToR.Of(), LexType.Tand.Of(), "A5".Of(), GenBinary.Of(), "Q2".Of()},
-                    [LexType.Teq] = new ITerm[] {IdentToR.Of(), LexType.Teq.Of(), "expr".Of(), GenAssign.Of()},
+                    [LexType.Teq] = new ITerm[] {IdentToCurr.Of(), LexType.Teq.Of(), "expr".Of(), GenAssign.Of()},
                 },
                 ["R".Of()] = new Dictionary<LexType, IEnumerable<ITerm>>
                 {
@@ -628,6 +628,11 @@ namespace Language.Analyzer
         {
             var v = a.FindVar(a.lastId);
             a.r.Push(VariableResult.Of(v));
+        };
+        
+        private static readonly Action<Ll1SyntaxAnalyzer> IdentToCurr = a =>
+        {
+            a.currVar = a.FindVar(a.lastId);
         };
 
         private static readonly Action<Ll1SyntaxAnalyzer> GenBinary = a =>
