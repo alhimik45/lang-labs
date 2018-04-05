@@ -30,5 +30,6 @@ namespace Language.Analyzer
         }
 
         public string ReadableName => "v" + FullName.Replace('/', '_').Replace('{','_').Replace('}','_');
+        public string Ptr => new Dictionary<SemType,string>{[SemType.Char]="byte", [SemType.Int]="dword", [SemType.LongLongInt]="qword"}[Type] + $" ptr [{ReadableName}]"; 
     }
 }

@@ -23,7 +23,7 @@ syscall
 ";
 
         private readonly List<Triad> ir;
-
+        private readonly HashSet<VarInfo> globVars = new HashSet<VarInfo>();
         private readonly List<VarInfo> bssVars;
         private readonly List<(VarInfo var, ConstResult val)> dataVars;
 
@@ -61,10 +61,12 @@ _start:
                 {
                     if (i + 1 < ir.Count && ir[i + 1].Operation == Operation.Assign)
                     {
+                        globVars.Add(ir[i + 1].Arg1.Var);
                         dataVars.Add((ir[i + 1].Arg1.Var, ir[i + 1].Arg2));
                     }
                     else
                     {
+                        globVars.Add(triad.Arg1.Var);
                         bssVars.Add(triad.Arg1.Var);
                     }
                 }
@@ -73,11 +75,17 @@ _start:
             return Header + GenBss() + GenData() + GenMain() + Footer;
         }
 
+        private int memOffset = 0;
+        private HashSet<Register> registers = new HashSet<Register>(Register.Registers);
+        private HashSet<MemoryPtr> mems = new HashSet<MemoryPtr>();
+
+        //varInfo, triadResult
+        Dictionary<dynamic, IPlace> places = new Dictionary<dynamic, IPlace>();
+
         private string GenMain()
         {
             var s = "";
             var globs = new HashSet<VarInfo>();
-            var places = new Dictionary<VarInfo, string>();
             for (var i = 0; i < ir.Count; i++)
             {
                 var triad = ir[i];
@@ -87,6 +95,15 @@ _start:
                         globs.Add(triad.Arg1.Var);
                         break;
                     case Operation.Assign:
+                        if(globVars.Contains(triad.Arg1.Var))
+                            break;
+                        switch (triad.Arg2)
+                        {
+                            case ConstResult cr:
+                                System.Diagnostics.Debugger.Break();
+                                s += $"mov {triad.Arg1.Var.Ptr}, " + (cr.Value is char ? (int) cr.Value: cr.Value) + "\n";
+                                break;
+                        }
                         break;
                     case Operation.Add:
                         break;
@@ -109,6 +126,66 @@ pop rbp
             }
 
             return s;
+        }
+
+        private string GetRegister(out Register reg)
+        {
+            if (registers.Any())
+            {
+                reg = registers.First();
+                registers.Remove(reg);
+            }
+            else
+            {
+                var regKey = FindRegister();
+                reg = places[regKey];
+                GetMem(out var mem);
+                places[regKey] = mem;
+                return $"mov {mem}, {reg.B64}\n";
+            }
+
+            return "";
+        }
+
+        private dynamic FindRegister()
+        {
+            foreach (var kv in places)
+            {
+                if (kv.Value is Register)
+                {
+                    return kv.Key;
+                }
+            }
+
+            return null;
+        }
+
+        private void GetMem(out MemoryPtr mem)
+        {
+            if (mems.Any())
+            {
+                mem = mems.First();
+                mems.Remove(mem);
+            }
+            else
+            {
+                mem = new MemoryPtr {Offset = memOffset};
+                memOffset += 8;
+            }
+        }
+
+        private void GetPlace(out IPlace place)
+        {
+            if (registers.Any())
+            {
+                GetRegister(out var reg);
+                place = reg;
+            }
+            else
+            {
+                GetMem(out var mem);
+                place = mem;
+            }
         }
     }
 }
