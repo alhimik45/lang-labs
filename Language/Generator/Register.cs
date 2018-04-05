@@ -60,7 +60,7 @@ namespace Language.Generator
                 case SemType.Char:
                     return $"movzx {B64}";
                 case SemType.Int:
-                    return $"movzx {B64}";
+                    return $"mov {B32}";
                 case SemType.LongLongInt:
                     return $"mov {B64}";
                 default:
