@@ -10,6 +10,7 @@ namespace Language.Analyzer
         public List<VarInfo> Params { get; }
         public string FullName { get; }
         public int Offset { get; }
+        public static HashSet<VarInfo> globs;
 
         public VarInfo(SemType type, Lexema location, string scope, int offset)
         {
@@ -30,6 +31,9 @@ namespace Language.Analyzer
         }
 
         public string ReadableName => "v" + FullName.Replace('/', '_').Replace('{','_').Replace('}','_');
-        public string Ptr => new Dictionary<SemType,string>{[SemType.Char]="byte", [SemType.Int]="dword", [SemType.LongLongInt]="qword"}[Type] + $" ptr [{ReadableName}]"; 
+
+        private string nname => globs.Contains(this) ? ReadableName : $"rbp-{Offset}";
+        
+        public string Ptr => new Dictionary<SemType,string>{[SemType.Char]="byte", [SemType.Int]="dword", [SemType.LongLongInt]="qword"}[Type] + $" ptr [{nname}]"; 
     }
 }

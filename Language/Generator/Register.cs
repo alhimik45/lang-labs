@@ -1,4 +1,7 @@
-﻿namespace Language.Generator
+﻿using System;
+using Language.Analyzer;
+
+namespace Language.Generator
 {
     public class Register : IPlace
     {
@@ -33,6 +36,36 @@
             B32 = b32;
             B16 = b16;
             B8 = b8;
+        }
+
+        public string OfType(SemType type)
+        {
+            switch (type)
+            {
+                case SemType.Char:
+                    return B8;
+                case SemType.Int:
+                    return B32;
+                case SemType.LongLongInt:
+                    return B64;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type));
+            }
+        }
+        
+        public string MovType(SemType type)
+        {
+            switch (type)
+            {
+                case SemType.Char:
+                    return $"movzx {B64}";
+                case SemType.Int:
+                    return $"movzx {B64}";
+                case SemType.LongLongInt:
+                    return $"mov {B64}";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type));
+            }
         }
     }
 }

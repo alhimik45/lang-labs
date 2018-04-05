@@ -1,12 +1,15 @@
-﻿namespace Language.Generator
+﻿using Language.Analyzer;
+
+namespace Language.Generator
 {
     public class MemoryPtr : IPlace
     {
         public int Offset;
+        public SemType Type;
 
         public override string ToString()
         {
-            return $"TMP+{Offset}";
+            return $"qword ptr [TMP+{Offset}]";
         }
     }
 }

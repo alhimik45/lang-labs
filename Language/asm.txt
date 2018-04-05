@@ -13,7 +13,17 @@ _start:
 push rbp
 mov rbp, rsp
 sub rsp, 5
-mov byte ptr [v_1_2_3_bb_0_], 6
+mov byte ptr [rbp-0], 6
+movzx rax, byte ptr [rbp-0]
+sub eax, dword ptr [v_1_r_0_]
+movzx rbx, byte ptr [v_1_ye_4_]
+sub ebx, 7
+add rax, rbx
+movzx rbx, byte ptr [rbp-0]
+sub ebx, 2
+sub rax, rbx
+mov rbx, 1
+add ebx, dword ptr [rbp-0]
 add rsp, 5
 pop rbp
 

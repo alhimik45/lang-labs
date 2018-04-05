@@ -32,5 +32,7 @@ namespace Language.Compiler
                     throw new ArgumentOutOfRangeException(nameof(type));
             }
         }
+
+        public string Str => (Value is char ? (int) Value : Value).ToString();
     }
 }
