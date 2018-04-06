@@ -2,6 +2,7 @@
 .intel_syntax noprefix	# используем синтаксис интел вместо AT&T
 .bss
 	.lcomm v_1_ff_5_, 1
+	TMP: .byte 16
 .data
 	TOINTFMT:  .asciz "Вывод: %d\n"
 	v_1_r_0_: .int 77
@@ -16,18 +17,22 @@ sub rsp, 5
 mov byte ptr [rbp-0], 6
 movzx rax, byte ptr [rbp-0]
 sub eax, dword ptr [v_1_r_0_]
-movzx rbx, byte ptr [v_1_ye_4_]
-sub ebx, 7
-add rax, rbx
-movzx rbx, byte ptr [rbp-0]
-sub ebx, 2
-sub rax, rbx
+mov qword ptr [TMP+0], rax
+movzx rax, byte ptr [v_1_ye_4_]
+sub eax, 7
+add rax, qword ptr [TMP+0]
+mov qword ptr [TMP+0], rax
+movzx rax, byte ptr [rbp-0]
+sub eax, 2
+sub qword ptr [TMP+0], rax
 mov dword ptr [rbp-0], eax
-mov rbx, 1
-add ebx, dword ptr [rbp-0]
-mov dword ptr [rbp-0], ebx
-mov ecx, dword ptr [rbp-0]
-mov dword ptr [v_1_r_0_], ecx
+mov qword ptr [TMP+0], rax
+mov rax, 1
+add eax, dword ptr [rbp-0]
+mov dword ptr [rbp-0], eax
+mov qword ptr [TMP+8], rax
+mov eax, dword ptr [rbp-0]
+mov dword ptr [v_1_r_0_], eax
 add rsp, 5
 pop rbp
 
