@@ -27,7 +27,7 @@ namespace Language.Generator
 
         public static readonly Register[] Registers =
         {
-            Rax, 
+            Rax, Rbx, Rcx, Rdx, Rsi, Rdi, R8, R9, R10, R11, R12, R13, R14, R15
         };
 
         public Register(string b64, string b32, string b16, string b8)
