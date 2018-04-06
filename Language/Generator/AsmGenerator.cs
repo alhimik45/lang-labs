@@ -175,8 +175,11 @@ pop rbp
             string v2 = DetType(triad.Arg2);
             var changed = false;
 
-            string OpOrder(params string[] args) =>
-                string.Join(", ", !changed || op != "sub" ? args : args.Reverse());
+            string OpOrder(out bool ch, params string[] args)
+            {
+                ch = !(!changed || op != "sub");
+                return string.Join(", ", !changed || op != "sub" ? args : args.Reverse());
+            }
 
             var dict = new Dictionary<(string, string), Action>
             {
@@ -184,14 +187,14 @@ pop rbp
                 {
                     s += GetRegister(out var reg);
                     s += $"mov {reg.B64}, {a1.Str}\n";
-                    s += $"{op} {OpOrder(reg.OfType(a2.Type), a2.Str)}\n";
+                    s += $"{op} {OpOrder(out bool _, reg.OfType(a2.Type), a2.Str)}\n";
                     places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg;
                 },
                 [("treg", "const")] = () =>
                 {
                     (a2, a1) = (a1, a2);
                     var reg = (Register) places[a2];
-                    s += $"{op} {OpOrder(reg.OfType(a1.Type), a1.Str)}\n";
+                    s += $"{op} {OpOrder(out bool _, reg.OfType(a1.Type), a1.Str)}\n";
                     places.Remove(a2);
                     places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg;
                 },
@@ -201,7 +204,7 @@ pop rbp
                     s += GetRegister(out var reg);
                     var mem = (MemoryPtr) places[a2];
                     s += $"mov {reg.B64}, {a1.Str}\n";
-                    s += $"{op} {OpOrder(reg.B64, mem.ToString())}\n";
+                    s += $"{op} {OpOrder(out _, reg.B64, mem.ToString())}\n";
                     places.Remove(a2);
                     mems.Add(mem);
                     places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg;
@@ -211,33 +214,60 @@ pop rbp
                     (a2, a1) = (a1, a2);
                     s += GetRegister(out var reg);
                     s += $"mov {reg.B64}, {a1.Str}\n";
-                    s += $"{op} {OpOrder(reg.OfType(a2.Type), a2.Var.Ptr)}\n";
+                    s += $"{op} {OpOrder(out bool _, reg.OfType(a2.Type), a2.Var.Ptr)}\n";
                     places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg;
                 },
                 [("treg", "treg")] = () =>
                 {
                     var reg1 = (Register) places[a1];
                     var reg2 = (Register) places[a2];
-                    s += $"{op} {OpOrder(reg1.B64, reg2.B64)}\n";
-                    registers.Add(reg2);
-                    places.Remove(a2);
-                    places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg1;
+                    s += $"{op} {OpOrder(out var ch, reg1.B64, reg2.B64)}\n";
+                    if (ch)
+                    {
+                        registers.Add(reg1);
+                        places.Remove(a1);
+                        places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg2;
+                    }
+                    else
+                    {
+                        registers.Add(reg2);
+                        places.Remove(a2);
+                        places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg1;
+                    }
                 },
                 [("treg", "tmem")] = () =>
                 {
                     var reg1 = (Register) places[a1];
                     var mem = (MemoryPtr) places[a2];
-                    s += $"{op} {OpOrder(reg1.B64, mem.ToString())}\n";
-                    mems.Add(mem);
-                    places.Remove(a2);
-                    places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg1;
+                    s += $"{op} {OpOrder(out var ch, reg1.B64, mem.ToString())}\n";
+                    if (ch)
+                    {
+                        registers.Add(reg1);
+                        places.Remove(a1);
+                        places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = mem;
+                    }
+                    else
+                    {
+                        mems.Add(mem);
+                        places.Remove(a2);
+                        places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg1;
+                    }
                 },
                 [("treg", "vmem")] = () =>
                 {
                     var reg = (Register) places[a1];
-                    s += $"{op} {OpOrder(reg.OfType(a2.Type), a2.Var.Ptr)}\n";
-                    places.Remove(a1);
-                    places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg;
+                    s += $"{op} {OpOrder(out bool ch, reg.OfType(a2.Type), a2.Var.Ptr)}\n";
+                    if (ch)
+                    {
+                        s += $"{reg.MovType(a2.Type)}, {a2.Var.Ptr}\n";
+                        places.Remove(a1);
+                        places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg;
+                    }
+                    else
+                    {
+                        places.Remove(a1);
+                        places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg;
+                    }
                 },
                 [("tmem", "tmem")] = () =>
                 {
@@ -245,7 +275,7 @@ pop rbp
                     var mem1 = (MemoryPtr) places[a1];
                     var mem2 = (MemoryPtr) places[a2];
                     s += $"{reg.MovType(mem1.Type)}, {mem1}\n";
-                    s += $"{op} {OpOrder(reg.B64, mem2.ToString())}\n";
+                    s += $"{op} {OpOrder(out _, reg.B64, mem2.ToString())}\n";
                     mems.Add(mem1);
                     mems.Add(mem2);
                     places.Remove(a1);
@@ -257,7 +287,7 @@ pop rbp
                     s += GetRegister(out var reg);
                     var mem1 = (MemoryPtr) places[a1];
                     s += $"{reg.MovType(mem1.Type)}, {mem1}\n";
-                    s += $"{op} {OpOrder(reg.OfType(a2.Type), a2.Var.Ptr)}\n";
+                    s += $"{op} {OpOrder(out bool _, reg.OfType(a2.Type), a2.Var.Ptr)}\n";
                     mems.Add(mem1);
                     places.Remove(a1);
                     places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg;
@@ -266,7 +296,7 @@ pop rbp
                 {
                     s += GetRegister(out var reg);
                     s += $"{reg.MovType(a1.Type)}, {a1.Var.Ptr}\n";
-                    s += $"{op} {OpOrder(reg.OfType(a2.Type), a2.Var.Ptr)}\n";
+                    s += $"{op} {OpOrder(out bool _, reg.OfType(a2.Type), a2.Var.Ptr)}\n";
                     places[TriadResult.Of(i, (SemType) Math.Max((int) a1.Type, (int) a2.Type))] = reg;
                 }
             };
